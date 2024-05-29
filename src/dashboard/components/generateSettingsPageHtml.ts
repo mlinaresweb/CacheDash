@@ -1,72 +1,42 @@
-import { generateSidebarHtml } from './sidebar';
+// src/components/generateSettingsPageHtml.ts
+import { LocalCacheService } from '../../local/localCacheService';
+import { RedisCacheService } from '../../redis/redisCacheService';
 
-export function generateSettingsPageHtml(serviceSettings: { service: string, defaultTTL: number, maxMemorySize: number }[]): string {
-    return `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-            <title>Cache Settings</title>
-            <style>
-                body {
-                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                    background-color: #f8f9fa;
-                    display: flex;
-                    margin: 0;
-                    padding: 0;
-                }
-                .content {
-                    margin-left: 290px;
-                    margin-right: 40px;
-                    padding: 20px;
-                    width: calc(100% - 330px);
-                }
-                .section {
-                    margin-bottom: 20px;
-                    padding: 10px;
-                    border: 1px solid #ccc;
-                }
-                .section h2 {
-                    margin-top: 0;
-                }
-            </style>
-        </head>
-        <body>
-        <div class="content">
-            <h1>Cache Settings</h1>
-
-            <div class="section">
-                <h2>Global Configuration</h2>
-                <form action="/update-global-settings" method="POST">
-                    <label for="globalDefaultTTL">Default TTL (seconds):</label>
-                    <input type="number" id="globalDefaultTTL" name="defaultTTL" required><br><br>
-
-                    <label for="globalMaxMemorySizeMB">Max Memory Size (MB):</label>
-                    <input type="number" id="globalMaxMemorySizeMB" name="maxMemorySizeMB" required><br><br>
-
-                    <button type="submit" class="btn btn-primary">Update Global Settings</button>
-                </form>
+export function generateSettingsPageHtml(serviceRegistry: Map<string, LocalCacheService | RedisCacheService>): string {
+    let html = `<h1>Cache Service Settings</h1>`;
+    serviceRegistry.forEach((service, identifier) => {
+        const config = service.getConfig();
+        html += `
+            <h2>Service: ${identifier}</h2>
+            <p>TTL: ${config.ttl}</p>
+            <p>Max Memory Size: ${config.maxMemorySizeMB !== undefined ? config.maxMemorySizeMB.toFixed(2) : 'NO LIMIT'} MB</p>
+            <div>
+                <label for="ttl-${identifier}">New TTL:</label>
+                <input type="number" id="ttl-${identifier}" step="1" />
+                <label for="maxMemorySize-${identifier}">New Max Memory Size (MB):</label>
+                <input type="number" id="maxMemorySize-${identifier}" step="0.01" />
+                <button onclick="updateSettings('${identifier}')">Update</button>
             </div>
-
-            ${serviceSettings.map(setting => `
-                <div class="section">
-                    <h2>Settings for ${setting.service}</h2>
-                    <form action="/update-service-settings" method="POST">
-                        <input type="hidden" name="serviceIdentifier" value="${setting.service}">
-                        
-                        <label for="defaultTTL-${setting.service}">Default TTL (seconds):</label>
-                        <input type="number" id="defaultTTL-${setting.service}" name="defaultTTL" value="${setting.defaultTTL}" required><br><br>
-
-                        <label for="maxMemorySizeMB-${setting.service}">Max Memory Size (MB):</label>
-                        <input type="number" id="maxMemorySizeMB-${setting.service}" name="maxMemorySizeMB" value="${setting.maxMemorySize / (1024 * 1024)}" required><br><br>
-
-                        <button type="submit" class="btn btn-primary">Update Settings</button>
-                    </form>
-                </div>
-            `).join('')}
-        </div>
-        </body>
-        </html>
+        `;
+    });
+    html += `
+        <script>
+            function updateSettings(serviceIdentifier) {
+                const ttl = document.getElementById('ttl-' + serviceIdentifier).value;
+                const maxMemorySize = document.getElementById('maxMemorySize-' + serviceIdentifier).value;
+                
+                fetch('/update-settings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ serviceIdentifier, ttl, maxMemorySize })
+                })
+                .then(response => response.text())
+                .then(data => alert(data))
+                .catch(error => console.error('Error:', error));
+            }
+        </script>
     `;
+    return html;
 }

@@ -1,5 +1,5 @@
 import { KeyStats } from '../../types/cache';
-import { generatePagination } from '../utils/htmlGenerator';
+import { generatePagination } from '../utils/paginationHtmlGenerator';
 import { generateSidebarHtml } from './sidebar';
 
 export function generateHtmlDashboard(service: string, keyStats: KeyStats[], totalItems: number, searchKey?: string, page: number = 1, limit: number = 10, sortBy: keyof KeyStats = 'keyName', order: 'asc' | 'desc' = 'asc'): string {

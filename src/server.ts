@@ -1,6 +1,6 @@
 import express, { Express, Request, Response } from 'express';
 import dotenv from 'dotenv';
-// import riotRoutes from './api/routes/riotRoutes';
+import riotRoutes from './api/routes/riotRoutes';
 import cors from 'cors'; 
 import * as path from 'path';
 
@@ -18,6 +18,7 @@ const corsOptions = {
 app.use(cors(corsOptions)); 
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 
 //SERVIR ARCHIVOS ESTATICOS
@@ -25,8 +26,7 @@ app.use('/static', express.static(path.join(__dirname, '../static')));
 // Servir archivos estáticos (HTML, CSS, JS)
 app.use(express.static(path.join(__dirname, '../public')));
 
-//RUTA API RIOT
-// app.use('/api', riotRoutes);
+app.use('/api', riotRoutes);
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Servidor Express con TypeScript está funcionando!');
