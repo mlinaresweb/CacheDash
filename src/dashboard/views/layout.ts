@@ -18,9 +18,10 @@ export function generateLayoutHtml(content: string): string {
                     padding: 0;
                 }
                 .content {
-                    margin-left: 250px; 
+                    margin-left: 290px;
+                    margin-right: 40px;
                     padding: 20px;
-                    width: calc(100% - 250px); 
+                    width: calc(100% - 330px);
                 }
                 @media (max-width: 992px) {
                     .content {

@@ -1,5 +1,5 @@
 // src/webSockets/broadcasts/broadcastUpdateLogs.ts
-import { generateLogsHtml } from '../../components/generateLogsHtml';
+import { generateLogsHtml } from '../../views/pages/LogsView';
 import { broadcast } from '../websocketServer';
 import { GlobalCacheStatsCollector } from '../../globalCacheStatsCollector';
 import { logger } from '../../utils/loggerService';

@@ -2,8 +2,8 @@
 import { Request, Response } from 'express';
 import { GlobalCacheStatsCollector } from '../globalCacheStatsCollector';
 import { logger } from '../utils/loggerService';
-import { generateLogsHtml } from '../components/generateLogsHtml';
-
+import { generateLogsHtml } from '..//views/pages/LogsView';
+import { generateLayoutHtml } from '../views/layout';
 export function handleLogs(req: Request, res: Response): void {
     const globalCacheStatsCollector = GlobalCacheStatsCollector.getInstance();
     const service = req.query.service as string;
@@ -21,6 +21,7 @@ export function handleLogs(req: Request, res: Response): void {
         logs = logs.filter(log => log.message.toLowerCase().includes(search.toLowerCase()));
     }
     const services = Array.from(globalCacheStatsCollector.getServiceRegistryKeys());
-    const html = generateLogsHtml(logs, services, !service, service);
+    const LogsHtml = generateLogsHtml(logs, services, !service, service);
+    const html = generateLayoutHtml(LogsHtml);
     res.send(html);
 }
