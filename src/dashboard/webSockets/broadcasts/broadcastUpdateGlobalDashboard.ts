@@ -1,5 +1,5 @@
 // src/webSockets/broadcasts/broadcastUpdateGlobalDashboard.ts
-import { generateMainDashboardHtml } from '../../components/generateMainDashboardHtml';
+import { generateMainDashboardHtml } from '../../views/pages/MainDashboard';
 import { broadcast } from '../websocketServer';
 import { GlobalCacheStatsCollector } from '../../globalCacheStatsCollector';
 
