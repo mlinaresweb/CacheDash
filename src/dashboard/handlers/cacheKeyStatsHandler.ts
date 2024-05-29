@@ -2,9 +2,9 @@
 import { Request, Response } from 'express';
 import { GlobalCacheStatsCollector } from '../globalCacheStatsCollector';
 import { KeyStats } from '../../types/cache';
-import { generateServiceListHtml } from '../components/serviceList';
-import { generateHtmlDashboard } from '../components/dashboard';
-
+import { generateServiceListViewHtml } from '../views/pages/ServiceListView';
+import { generateKeyStatsViewHtml } from '../views/pages/KeyStatsView';
+import { generateLayoutHtml } from '../views/layout';
 export function handleCacheKeyStats(req: Request, res: Response): void {
     const globalCacheStatsCollector = GlobalCacheStatsCollector.getInstance();
     if (!globalCacheStatsCollector.isMonitoringEnabled()) {
@@ -19,11 +19,14 @@ export function handleCacheKeyStats(req: Request, res: Response): void {
     const limit = parseInt(req.query.limit as string) || 10;
     if (service) {
         const { keyStats, totalItems } = globalCacheStatsCollector.getKeyStatsForService(service, searchKey, page, limit, sortBy, order);
-        const html = generateHtmlDashboard(service, keyStats, totalItems, searchKey, page, limit, sortBy, order);
+        const dashboardServicesView = generateKeyStatsViewHtml(service, keyStats, totalItems, searchKey, page, limit, sortBy, order);
+        const html = generateLayoutHtml(dashboardServicesView);
+
         res.send(html);
     } else {
         const allStats = globalCacheStatsCollector.getAllStats();
-        const html = generateServiceListHtml(allStats);
+        const serviceListView = generateServiceListViewHtml(allStats);
+        const html = generateLayoutHtml(serviceListView);
         res.send(html);
     }
 }

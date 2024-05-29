@@ -1,28 +1,15 @@
-import { CacheStats } from '../../types/cache';
-import { generateSidebarHtml } from './sidebar';
+import { CacheStats } from '../../../types/cache';
+import { generateServiceListComponentHtml } from '../../components/serviceList/ServiceList';
 
-export function generateServiceListHtml(allStats: Map<string, CacheStats>): string {
-    const sidebarHtml = generateSidebarHtml();
+export function generateServiceListViewHtml(allStats: Map<string, CacheStats>): string {
+    const serviceListHtml = generateServiceListComponentHtml(allStats);
 
-    let html = `
+    return `
     <html>
     <head>
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
         <style>
-            body {
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                background-color: #f8f9fa;
-                display: flex;
-                margin: 0;
-                padding: 0;
-            }
-            .content {
-                margin-left: 290px; /* Adjusting for sidebar width plus some spacing */
-                margin-right: 40px; /* Adding right margin */
-                padding: 20px;
-                width: calc(100% - 330px); /* Adjusting width to fill the remaining space */
-            }
             .service-card { 
                 margin-bottom: 20px; 
                 box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
@@ -115,43 +102,12 @@ export function generateServiceListHtml(allStats: Map<string, CacheStats>): stri
             }
         </script>
     </head>
-    <body>
-        ${sidebarHtml}
-        <div class="content">
             <div class="">
                 <h1 class="mb-4">Cache Services Dashboard</h1>
                 <div id="service-list" class="row">
-    `;
-
-    for (const [service, stats] of allStats) {
-        const sizeInKB = (stats.size / 1024).toFixed(2); // Convert bytes to KB and format to 2 decimal places
-        html += `
-            <div class="col-md-4">
-                <div class="card service-card">
-                    <div class="card-body">
-                        <div class="service-info">
-                            <h5><i class="fas fa-database"></i> ${service}</h5>
-                            <div class="stats">
-                                <div class="stat"><i class="fas fa-check-circle"></i> Hits: ${stats.hits}</div>
-                                <div class="stat"><i class="fas fa-times-circle"></i> Misses: ${stats.misses}</div>
-                                <div class="stat"><i class="fas fa-key"></i> Keys: ${stats.keys}</div>
-                                <div class="stat"><i class="fas fa-database"></i> Size: ${sizeInKB} KB</div>
-                            </div>
-                        </div>
-                        <a href="/cache-key-stats?service=${service}" class="btn btn-primary">Details</a>
-                    </div>
+                    ${serviceListHtml}
                 </div>
             </div>
-        `;
-    }
-
-    html += `
-                </div>
-            </div>
-        </div>
-    </body>
     </html>
     `;
-
-    return html;
 }

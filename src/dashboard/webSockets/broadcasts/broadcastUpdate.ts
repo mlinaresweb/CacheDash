@@ -1,12 +1,12 @@
 // src/webSockets/broadcasts/broadcastUpdate.ts
-import { generateServiceListHtml } from '../../components/serviceList';
+import { generateServiceListViewHtml } from '../../views/pages/ServiceListView';
 import { broadcast } from '../websocketServer';
 import { GlobalCacheStatsCollector } from '../../globalCacheStatsCollector';
 
 export async function broadcastUpdate(): Promise<void> {
     const globalCacheStatsCollector = GlobalCacheStatsCollector.getInstance();
     const allStats = globalCacheStatsCollector.getAllStats();
-    const html = generateServiceListHtml(allStats);
+    const html = generateServiceListViewHtml(allStats);
     broadcast({ type: 'UPDATE_VIEW', html });
 
     for (const service of globalCacheStatsCollector.getServiceRegistry().keys()) {

@@ -1,7 +1,8 @@
 // src/handlers/globalStatsChartsHandler.ts
 import { Request, Response } from 'express';
 import { GlobalCacheStatsCollector } from '../globalCacheStatsCollector';
-import { generateGlobalChartsHtml } from '../components/generateGlobalSummaryHtml';
+import { generateStatisticsGlobalViewHtml } from '../views/pages/StatisticsGlobalView';
+import { generateLayoutHtml } from '../views/layout';
 
 export function handleGlobalStatsCharts(req: Request, res: Response): void {
     const globalCacheStatsCollector = GlobalCacheStatsCollector.getInstance();
@@ -37,6 +38,8 @@ export function handleGlobalStatsCharts(req: Request, res: Response): void {
     const uncachedKeyResponseTimesData = globalCacheStatsCollector.getKeyUncachedResponseTimes();
     const uncachedKeyResponseLabels = uncachedKeyResponseTimesData.labels;
     const uncachedKeyResponseTimes = uncachedKeyResponseTimesData.responseTimes;
-    const html = generateGlobalChartsHtml(labels, hits, misses, sizes, totalHits, totalMisses, totalKeys, totalSize, averageResponseTime, uncachedAverageResponseTime, keyResponseTimes, keyResponseLabels, uncachedKeyResponseTimes, uncachedKeyResponseLabels, totalKeysAdded, totalKeysDeleted, totalEvictions);
+    const statisticsGlobalView =generateStatisticsGlobalViewHtml("Global",labels, hits, misses, sizes, totalHits, totalMisses, totalKeys, totalSize, averageResponseTime, uncachedAverageResponseTime, keyResponseTimes, keyResponseLabels, uncachedKeyResponseTimes, uncachedKeyResponseLabels, totalKeysAdded, totalKeysDeleted, totalEvictions);
+    const html = generateLayoutHtml(statisticsGlobalView);
+
     res.send(html);
 }

@@ -1,7 +1,8 @@
 // src/handlers/cacheKeyStatsChartsHandler.ts
 import { Request, Response } from 'express';
 import { GlobalCacheStatsCollector } from '../globalCacheStatsCollector';
-import { generateChartsHtml } from '../components/charts';
+import { generateStatisticsViewHtml } from '../views/pages/StatisticsView';
+import { generateLayoutHtml } from '../views/layout';
 
 export function handleCacheKeyStatsCharts(req: Request, res: Response): void {
     const globalCacheStatsCollector = GlobalCacheStatsCollector.getInstance();
@@ -38,7 +39,8 @@ export function handleCacheKeyStatsCharts(req: Request, res: Response): void {
         const uncachedKeyResponseTimesData = globalCacheStatsCollector.getKeyUncachedResponseTimes(service);
         const uncachedKeyResponseLabels = uncachedKeyResponseTimesData.labels;
         const uncachedKeyResponseTimes = uncachedKeyResponseTimesData.responseTimes;
-        const html = generateChartsHtml(service, labelsHitsMisses, hits, misses, sizes, totalHits, totalMisses, totalKeys, totalSize, averageResponseTime, uncachedAverageResponseTime, keyResponseTimes, keyResponseLabels, uncachedKeyResponseTimes, uncachedKeyResponseLabels, totalStats?.keysAdded || 0, totalStats?.keysDeleted || 0, totalEvictions);
+        const statisticsView = generateStatisticsViewHtml(service, labelsHitsMisses, hits, misses, sizes, totalHits, totalMisses, totalKeys, totalSize, averageResponseTime, uncachedAverageResponseTime, keyResponseTimes, keyResponseLabels, uncachedKeyResponseTimes, uncachedKeyResponseLabels, totalStats?.keysAdded || 0, totalStats?.keysDeleted || 0, totalEvictions);
+        const html = generateLayoutHtml(statisticsView);
         res.send(html);
     } else {
         res.status(400).json({ error: "Service parameter is required." });

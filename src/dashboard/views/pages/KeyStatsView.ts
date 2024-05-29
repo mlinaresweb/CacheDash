@@ -1,12 +1,15 @@
-import { KeyStats } from '../../types/cache';
-import { generatePagination } from '../utils/paginationHtmlGenerator';
-import { generateSidebarHtml } from './sidebar';
+import { KeyStats } from '../../../types/cache';
+import { generateKeysTableHtml } from '../../components/serviceDashboard/KeysTable';
+import { generatePaginationComponentHtml } from '../../components/serviceDashboard/Pagination';
+import { generateFiltersHtml } from '../../components/serviceDashboard/Filters';
 
-export function generateHtmlDashboard(service: string, keyStats: KeyStats[], totalItems: number, searchKey?: string, page: number = 1, limit: number = 10, sortBy: keyof KeyStats = 'keyName', order: 'asc' | 'desc' = 'asc'): string {
+export function generateKeyStatsViewHtml(service: string, keyStats: KeyStats[], totalItems: number, searchKey?: string, page: number = 1, limit: number = 10, sortBy: keyof KeyStats = 'keyName', order: 'asc' | 'desc' = 'asc'): string {
     const totalPages = Math.ceil(totalItems / limit);
-    const sidebarHtml = generateSidebarHtml();
+    const filtersHtml = generateFiltersHtml(service, searchKey, sortBy, order);
+    const keysTableHtml = generateKeysTableHtml(service, keyStats);
+    const paginationHtml = generatePaginationComponentHtml(service, searchKey, page, limit, sortBy, order, totalPages);
 
-    let html = `
+    return `
     <html>
     <head>
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
@@ -223,10 +226,9 @@ export function generateHtmlDashboard(service: string, keyStats: KeyStats[], tot
             });
         </script>
     </head>
-    <body>
-        ${sidebarHtml}
+   
         <div id="alertPlaceholder" class=""></div>
-        <div class="content">
+       
             <a href="/cache-key-stats" class="btn btn-secondary mb-4"><i class="fas fa-arrow-left"></i> Back to Services List</a>
             <h2 class="mb-4">Service: ${service}</h2>
             <div class="btn-group mb-4">
@@ -234,71 +236,10 @@ export function generateHtmlDashboard(service: string, keyStats: KeyStats[], tot
                 <button class="btn btn-success" onclick="exportToCsv('${service}')">Export to CSV</button>
                 <a href="/cache-key-stats/charts?service=${service}" class="btn btn-info">View Charts</a>
             </div>
-            <form id="searchForm" class="form-inline float-right mb-4" action="/cache-key-stats" method="get">
-                <input type="hidden" name="service" value="${service}">
-                <input id="searchKey" class="form-control mr-sm-2" type="search" name="searchKey" placeholder="Search by key" aria-label="Search" value="${searchKey || ''}">
-                <select id="sortBy" class="form-control mr-sm-2" name="sortBy">
-                    <option value="keyName" ${sortBy === 'keyName' ? 'selected' : ''}>Key</option>
-                    <option value="hits" ${sortBy === 'hits' ? 'selected' : ''}>Hits</option>
-                    <option value="misses" ${sortBy === 'misses' ? 'selected' : ''}>Misses</option>
-                    <option value="setTime" ${sortBy === 'setTime' ? 'selected' : ''}>Set Time</option>
-                    <option value="endTime" ${sortBy === 'endTime' ? 'selected' : ''}>End Time</option>
-                    <option value="ttl" ${sortBy === 'ttl' ? 'selected' : ''}>TTL (seconds)</option>
-                    <option value="size" ${sortBy === 'size' ? 'selected' : ''}>Size (bytes)</option>
-                </select>
-                <select id="order" class="form-control mr-sm-2" name="order">
-                    <option value="asc" ${order === 'asc' ? 'selected' : ''}>Ascending</option>
-                    <option value="desc" ${order === 'desc' ? 'selected' : ''}>Descending</option>
-                </select>
-            </form>
-            <div class="table-responsive">
-                <table class="table table-striped mt-4">
-                    <thead>
-                        <tr>
-                            <th class="truncate">Key</th>
-                            <th>Hits</th>
-                            <th>Misses</th>
-                            <th>Set Time</th>
-                            <th>End Time</th>
-                            <th>TTL (seconds)</th>
-                            <th>Time Remaining (seconds)</th>
-                            <th>Size (bytes)</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${keyStats.map(stat => {
-                            const setTime = new Date(stat.setTime).toLocaleString();
-                            const endTime = new Date(stat.endTime || 0).toLocaleString();
-                            const timeRemaining = Math.max(0, Math.floor((stat.setTime + stat.ttl * 1000 - Date.now()) / 1000));
-    
-                            return `
-                            <tr>
-                                <td class="truncate">${stat.keyName}</td>
-                                <td>${stat.hits}</td>
-                                <td>${stat.misses}</td>
-                                <td>${setTime}</td>
-                                <td>${endTime}</td>
-                                <td>${stat.ttl}</td>
-                                <td>${timeRemaining}</td>
-                                <td>${stat.size}</td>
-                                <td class="actions">
-                                    <button class="btn btn-danger btn-sm" onclick="deleteKey('${service}', '${stat.keyName}')"><i class="fas fa-trash-alt"></i></button>
-                                    <button class="btn btn-primary btn-sm" onclick="refreshKey('${service}', '${stat.keyName}')"><i class="fas fa-sync-alt"></i></button>
-                                    <button class="btn btn-secondary btn-sm" onclick="showTtlModal('${service}', '${stat.keyName}', ${stat.ttl})"><i class="fas fa-cog"></i></button>
-                                </td>
-                            </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
-            </div>
-            <nav aria-label="Page navigation example">
-                <ul class="pagination">
-                    ${generatePagination(service, searchKey, page, limit, sortBy, order, totalPages)}
-                </ul>
-            </nav>
-        </div>
+            ${filtersHtml}
+            ${keysTableHtml}
+            ${paginationHtml}
+        
     
         <!-- Modal for updating TTL -->
         <div class="modal fade" id="ttlModal" tabindex="-1" role="dialog" aria-labelledby="ttlModalLabel" aria-hidden="true">
@@ -327,9 +268,6 @@ export function generateHtmlDashboard(service: string, keyStats: KeyStats[], tot
                 </div>
             </div>
         </div>
-    </body>
     </html>
     `;
-
-    return html;
 }
