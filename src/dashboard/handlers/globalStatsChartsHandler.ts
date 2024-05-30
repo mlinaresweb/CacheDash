@@ -39,6 +39,7 @@ export function handleGlobalStatsCharts(req: Request, res: Response): void {
     const uncachedKeyResponseLabels = uncachedKeyResponseTimesData.labels;
     const uncachedKeyResponseTimes = uncachedKeyResponseTimesData.responseTimes;
     const statisticsGlobalView =generateStatisticsGlobalViewHtml("Global",labels, hits, misses, sizes, totalHits, totalMisses, totalKeys, totalSize, averageResponseTime, uncachedAverageResponseTime, keyResponseTimes, keyResponseLabels, uncachedKeyResponseTimes, uncachedKeyResponseLabels, totalKeysAdded, totalKeysDeleted, totalEvictions);
+    const html = generateLayoutHtml(statisticsGlobalView);
 
-    res.send(statisticsGlobalView);
+    res.send(html);
 }

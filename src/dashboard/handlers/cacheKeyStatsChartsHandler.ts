@@ -40,7 +40,8 @@ export function handleCacheKeyStatsCharts(req: Request, res: Response): void {
         const uncachedKeyResponseLabels = uncachedKeyResponseTimesData.labels;
         const uncachedKeyResponseTimes = uncachedKeyResponseTimesData.responseTimes;
         const statisticsView = generateStatisticsViewHtml(service, labelsHitsMisses, hits, misses, sizes, totalHits, totalMisses, totalKeys, totalSize, averageResponseTime, uncachedAverageResponseTime, keyResponseTimes, keyResponseLabels, uncachedKeyResponseTimes, uncachedKeyResponseLabels, totalStats?.keysAdded || 0, totalStats?.keysDeleted || 0, totalEvictions);
-        res.send(statisticsView);
+        const html = generateLayoutHtml(statisticsView);
+        res.send(html);
     } else {
         res.status(400).json({ error: "Service parameter is required." });
     }
