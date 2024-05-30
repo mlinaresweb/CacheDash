@@ -22,6 +22,5 @@ export function handleLogs(req: Request, res: Response): void {
     }
     const services = Array.from(globalCacheStatsCollector.getServiceRegistryKeys());
     const LogsHtml = generateLogsHtml(logs, services, !service, service);
-    const html = generateLayoutHtml(LogsHtml);
-    res.send(html);
+    res.send(LogsHtml);
 }

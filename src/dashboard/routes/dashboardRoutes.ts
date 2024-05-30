@@ -1,9 +1,12 @@
 // src/routes/routes.ts
 import { Router } from 'express';
 import * as handlers from '../handlers';
+import { layoutMiddleware } from '../middleware/layoutMiddleware';
 
 export function configureRoutes(): Router {
     const router = Router();
+
+    router.use(layoutMiddleware);
 
     router.get('/cache-key-stats', handlers.handleCacheKeyStats);
     router.post('/delete-key', handlers.handleDeleteKey);

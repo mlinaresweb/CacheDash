@@ -104,13 +104,13 @@ export function generateSidebarHtml(): string {
       
     </style>
     <div class="sidebar">
-        <a href="/dashboard" class="nav-link"><i class="icono-sidebar" data-feather="activity"></i> Dashboard</a>
-        <a href="/cache-key-stats" class="nav-link"><i class="icono-sidebar" data-feather="list"></i> Service Lists <i data-feather="chevron-down" id="toggleSubmenu" aria-expanded="false" style="margin-left: 51px;"></i></a>
+        <a href="/dashboard" class="nav-link" data-pjax><i class="icono-sidebar" data-feather="activity"></i> Dashboard</a>
+        <a href="/cache-key-stats" class="nav-link" data-pjax><i class="icono-sidebar" data-feather="list"></i> Service Lists <i data-feather="chevron-down" id="toggleSubmenu" aria-expanded="false" style="margin-left: 51px;"></i></a>
         <div id="serviceListSubmenu">
             ${serviceLinksHtml}
         </div>
-        <a href="/logs" class="nav-link"><i class="icono-sidebar" data-feather="file-text"></i> Logs</a>
-        <a href="/settings" class="nav-link"><i class="icono-sidebar" data-feather="settings"></i> Settings</a>
+        <a href="/logs" class="nav-link" data-pjax><i class="icono-sidebar" data-feather="file-text"></i> Logs</a>
+        <a href="/settings" class="nav-link" data-pjax><i class="icono-sidebar" data-feather="settings"></i> Settings</a>
     </div>
     <div class="mobile-menu">
         <a href="/dashboard" class="nav-link"><i data-feather="activity"></i> Dashboard</a>
@@ -160,5 +160,5 @@ export function generateSidebarHtml(): string {
 function generateServiceLinks(): string {
     const globalCacheStatsCollector = GlobalCacheStatsCollector.getInstance();
     const activeServices = Array.from(globalCacheStatsCollector.getAllStats().keys()).slice(0, 5); // Mostrar un máximo de 5 servicios
-    return activeServices.map(service => `<a href="/cache-key-stats?service=${service}" class="nav-link services-sidebar">${service}</a>`).join('');
+    return activeServices.map(service => `<a href="/cache-key-stats?service=${service}" class="nav-link services-sidebar" data-pjax>${service}</a>`).join('');
 }

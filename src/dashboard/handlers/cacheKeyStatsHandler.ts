@@ -20,13 +20,10 @@ export function handleCacheKeyStats(req: Request, res: Response): void {
     if (service) {
         const { keyStats, totalItems } = globalCacheStatsCollector.getKeyStatsForService(service, searchKey, page, limit, sortBy, order);
         const dashboardServicesView = generateKeyStatsViewHtml(service, keyStats, totalItems, searchKey, page, limit, sortBy, order);
-        const html = generateLayoutHtml(dashboardServicesView);
-
-        res.send(html);
+        res.send(dashboardServicesView);
     } else {
         const allStats = globalCacheStatsCollector.getAllStats();
         const serviceListView = generateServiceListViewHtml(allStats);
-        const html = generateLayoutHtml(serviceListView);
-        res.send(html);
+        res.send(serviceListView);
     }
 }
