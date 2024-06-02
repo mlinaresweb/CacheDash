@@ -10,13 +10,17 @@ export function generateServiceListComponentHtml(allStats: Map<string, CacheStat
                 <div class="card service-card">
                     <div class="card-body">
                         <div class="service-info">
-                            <h5><i class="fas fa-database"></i> ${service}</h5>
+                            <h5><i class="fas fa-database" style="
+                            margin-bottom: 12px;
+                        "></i> ${service}</h5>
                             <div class="stats">
                                 <div class="stat"style="
                                 color: #389138;
-                            " ><i class="fas fa-check-circle"></i> Hits: ${stats.hits}</div>
+                                min-width: 84px;
+                            "><i class="fas fa-check-circle"></i> Hits: ${stats.hits}</div>
                                 <div class="stat" style="
                                 color: #f76a6a;
+                                min-width: 119px;
                             "><i class="fas fa-times-circle"></i> Misses: ${stats.misses}</div>
                                 <div class="stat" style="
                                 color: #39b4ff;

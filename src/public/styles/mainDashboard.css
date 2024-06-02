@@ -219,7 +219,7 @@ select.form-select {
 
 .table thead th {
     vertical-align: bottom;
-    border-bottom: 2px solid #454545 !important;
+    border-bottom: 1px solid #454545 !important;
 }
 
 .table td, .table th {

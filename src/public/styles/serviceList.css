@@ -43,6 +43,7 @@
     background: #3f3f3f;
     padding: 5px 10px; 
     border-radius: 5px; 
+    border: 1px solid #5d5d5d !important;
 }
 .service-card .btn { 
     margin-top: 10px; 

@@ -33,7 +33,7 @@ export function generateStatisticsGlobalViewHtml(
                 ${summaryHtml}
                 ${ratiosHtml}
             </div>
-            <h2 class="title">Service: ${service} - Statistics</h2>
+            <h2 class="title">${service} - Statistics</h2>
             ${chartsHtml}
     `;
 }

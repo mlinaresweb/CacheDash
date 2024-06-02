@@ -1,4 +1,4 @@
-export function generateLogsTableHtml(logs: { service: string, message: string, timestamp: Date }[]): string {
+export function generateLogsTableHtml(logs: { service: string, message: string, timestamp: Date }[], forTableOnly: boolean = false): string {
     const logRows = logs.map(log => {
         const formattedTimestamp = log.timestamp.toLocaleString();
         return `
@@ -9,6 +9,10 @@ export function generateLogsTableHtml(logs: { service: string, message: string, 
             </tr>
         `;
     }).join('');
+
+    if (forTableOnly) {
+        return logRows;
+    }
 
     return `
         <div class="table-container">

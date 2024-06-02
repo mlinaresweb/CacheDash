@@ -8,7 +8,7 @@ export function generateLogsHtml(
     currentService?: string, 
     forTableOnly: boolean = false
 ): string {
-    const logsTableHtml = generateLogsTableHtml(logs);
+    const logsTableHtml = generateLogsTableHtml(logs, forTableOnly);
 
     if (forTableOnly) {
         return logsTableHtml;
@@ -23,13 +23,13 @@ export function generateLogsHtml(
             <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
         </head>
-       
-                <div class="">
-                    <h1 class="">Cache <span class="yellow-cache">Logs</span></h1>
-                    ${filtersHtml}
-                    ${logsTableHtml}
-                </div>
-            
+        <body>
+            <div class="">
+                <h1 class="">Cache <span class="yellow-cache">Logs</span></h1>
+                ${filtersHtml}
+                ${logsTableHtml}
+                  
+            </div>
             <script>
                 function applyFilters() {
                     const startTimestamp = document.getElementById('startTimestamp').value;
@@ -70,7 +70,7 @@ export function generateLogsHtml(
                     }
                 });
             </script>
-       
+        </body>
         </html>
     `;
 }
