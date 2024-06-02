@@ -36,7 +36,9 @@ export function generateFiltersHtml(services: string[], isGlobal: boolean, curre
             <div class="form-group mr-2">
                 <input type="text" class="form-control" id="search" name="search" placeholder="Search logs" oninput="applyFilters()">
             </div>
-            <button type="button" class="btn btn-secondary" onclick="clearFilters()">Clear Filters</button>
+            <button type="button" class="btn btn-secondary" onclick="clearFilters()" style="
+            margin-top: 0;
+        ">Clear Filters</button>
         </form>
     `;
 }

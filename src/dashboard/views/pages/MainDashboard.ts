@@ -9,7 +9,7 @@ export function generateMainDashboardHtml(statsRegistry: Map<string, CacheStats>
     const chartHtml = generateChartHtml();
 
     return `       
-                <h1>Main Dashboard</h1>
+                <h1>Main <span class="yellow-cache">Dashboard</span></h1>
                 <div class="container-wrapper-maindashboard">
                     ${memoryCardHtml}
                     <div class="chart-container-maindashboard">

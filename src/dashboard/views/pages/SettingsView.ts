@@ -4,7 +4,7 @@ import { generateCacheServiceSettingsHtml } from '../../components/cacheServiceS
 
 export function generateSettingsPageHtml(serviceRegistry: Map<string, LocalCacheService | RedisCacheService>): string {
     let html = `
-        <h1>Cache Service Settings</h1>
+        <h1>Cache <span class="yellow-cache"> Settings </span></h1>
         ${Array.from(serviceRegistry.entries()).map(([identifier, service]) => generateCacheServiceSettingsHtml(service, identifier)).join('')}
         <script>
             function updateSettings(serviceIdentifier) {

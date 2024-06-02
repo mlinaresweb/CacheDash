@@ -16,6 +16,8 @@
     align-items: center; 
     padding: 20px;
     text-align: center;
+    border: 1px solid #454545 !important;
+    border-radius: 8px;
 }
 .service-card .service-info { 
     margin-bottom: 10px; 

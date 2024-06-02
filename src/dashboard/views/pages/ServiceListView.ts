@@ -37,7 +37,7 @@ export function generateServiceListViewHtml(allStats: Map<string, CacheStats>): 
         </script>
     </head>
             <div class="">
-                <h1 class="mb-4">Cache Services Dashboard</h1>
+                <h1 class="mb-4">Cache Services <span class="yellow-cache">Dashboard</span></h1>
                 <div id="service-list" class="row row-servicelist">
                     ${serviceListHtml}
                 </div>

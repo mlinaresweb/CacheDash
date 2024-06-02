@@ -24,6 +24,8 @@ body {
 }
 h1{
     margin-bottom: 20px !important;
+    font-size: 32px !important;
+    margin-top: 11px !important;
 }
 h2{
     font-size: 22px !important;
@@ -50,10 +52,22 @@ select {
 }
 
 .btn-secondary{
-    background-color: #2b2b2b !important;
-    border-color: #454545 !important;
+    background-color: #ffc107 !important;
+    border-color: #ffc107 !important;
+    margin-top: 11px;
+    color: #212121 !important;
 }
 .btn-secondary:hover {
-    background-color: #424242 !important;
-    border-color: #535353 !important;
+    background-color: #97750e !important;
+    border-color: #97750e !important;
+}
+.yellow-cache{
+    color: #ffc107 !important;
+}
+.btn-primary {
+  
+    background-color: #ffc107 !important;
+    border-color: #ffc107 !important;
+    color: #282828 !important;
+    font-weight: 600 !important;
 }

@@ -6,7 +6,7 @@ export function generateRatiosHtml(service: string, totalHits: number, totalMiss
 
     const colors = {
         hitRatio: 'green',
-        missRatio: 'red',
+        missRatio: '#dc3545',
         cacheRenewalRate: 'orange',
         evictionRate: '#2381f5'
     };

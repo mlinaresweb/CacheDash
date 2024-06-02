@@ -25,7 +25,7 @@ export function generateLogsHtml(
         </head>
        
                 <div class="">
-                    <h1 class="">Cache Logs</h1>
+                    <h1 class="">Cache <span class="yellow-cache">Logs</span></h1>
                     ${filtersHtml}
                     ${logsTableHtml}
                 </div>

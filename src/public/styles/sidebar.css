@@ -34,7 +34,7 @@
     width: 100%;
 }
 .sidebar a:hover {
-    background-color: #efefef;
+    background-color: #393939;
 }
 .sidebar .nav-link.active {
     background-color: #007bff;
@@ -56,13 +56,11 @@
 }
 .cachedash{
     padding: 10px 17px;
-    font-size: 28px;
+    font-size: 32px;
     font-weight: 700;
     margin-bottom: 10px;
 }
-.blue-cache{
-    color: #ffc107 !important;
-}
+
 
 /* Estilos para el menú móvil */
 @media (max-width: 992px) {

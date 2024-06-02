@@ -8,11 +8,11 @@ export function generateCacheServiceSettingsHtml(service: LocalCacheService | Re
         <p>TTL: ${config.ttl}</p>
         <p>Max Memory Size: ${config.maxMemorySizeMB !== undefined ? config.maxMemorySizeMB.toFixed(2) : 'NO LIMIT'} MB</p>
         <div>
-            <label for="ttl-${identifier}">New TTL:</label>
-            <input type="number" id="ttl-${identifier}" step="1" />
-            <label for="maxMemorySize-${identifier}">New Max Memory Size (MB):</label>
-            <input type="number" id="maxMemorySize-${identifier}" step="0.01" />
-            <button onclick="updateSettings('${identifier}')">Update</button>
+            <label class="logs-label" for="ttl-${identifier}">New TTL:</label>
+            <input  class="logs-input" type="number" id="ttl-${identifier}" step="1" />
+            <label  class="logs-label" for="maxMemorySize-${identifier}">New Max Memory Size (MB):</label>
+            <input  class="logs-input" type="number" id="maxMemorySize-${identifier}" step="0.01" />
+            <button  class="logs-button" onclick="updateSettings('${identifier}')">Update</button>
         </div>
     `;
 }

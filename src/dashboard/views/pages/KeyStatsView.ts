@@ -173,7 +173,7 @@ export function generateKeyStatsViewHtml(service: string, keyStats: KeyStats[], 
         <div id="alertPlaceholder" class=""></div>
        
             <a href="/cache-key-stats" class="btn btn-secondary mb-4"><i class="fas fa-arrow-left"></i> Back to Services List</a>
-            <h1 class="mb-4">Service: ${service}</h1>
+            <h1 class="mb-4">${service} <span class="yellow-cache"> Dashboard </span></h1>
             <div class="btn-group mb-4">
                 <button class="btn btn-danger" onclick="flushCache('${service}')">Flush Cache</button>
                 <button class="btn btn-success" onclick="exportToCsv('${service}')">Export to CSV</button>
