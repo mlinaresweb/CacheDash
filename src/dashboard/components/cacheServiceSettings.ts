@@ -4,7 +4,7 @@ import { RedisCacheService } from '../../redis/redisCacheService';
 export function generateCacheServiceSettingsHtml(service: LocalCacheService | RedisCacheService, identifier: string): string {
     const config = service.getConfig();
     return `
-        <h2>Service: ${identifier}</h2>
+        <h2 class="settings-h2">Service: ${identifier}</h2>
         <p>TTL: ${config.ttl}</p>
         <p>Max Memory Size: ${config.maxMemorySizeMB !== undefined ? config.maxMemorySizeMB.toFixed(2) : 'NO LIMIT'} MB</p>
         <div>

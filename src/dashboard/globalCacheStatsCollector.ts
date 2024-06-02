@@ -3,6 +3,7 @@ import { Server } from 'http';
 import { CacheStats, KeyStats } from '../types/cache';
 import { LocalCacheService } from '../local/localCacheService';
 import { RedisCacheService } from '../redis/redisCacheService'; 
+import path from 'path';
 
 import * as broadcasts from './webSockets/broadcasts'; 
 import { configureRoutes } from './routes/dashboardRoutes';
@@ -19,6 +20,7 @@ export class GlobalCacheStatsCollector {
         this.app = express();
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: true }));
+        this.app.use(express.static(path.join(__dirname, '../public')));
 
         this.app.use(configureRoutes());  
     }

@@ -22,33 +22,10 @@ export function generateLogsHtml(
             <title>Cache Logs</title>
             <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-            <style>
-                .table-container {
-                    max-height: calc(100vh - 200px);
-                    overflow-y: auto;
-                    overflow-x: auto;
-                    border: 1px solid #dee2e6;
-                    border-radius: 4px;
-                }
-                .table-container::-webkit-scrollbar {
-                    width: 12px;
-                    height: 12px;
-                }
-                .table-container::-webkit-scrollbar-track {
-                    background: #f1f1f1;
-                }
-                .table-container::-webkit-scrollbar-thumb {
-                    background: #888;
-                    border-radius: 6px;
-                }
-                .table-container::-webkit-scrollbar-thumb:hover {
-                    background: #555;
-                }
-            </style>
         </head>
        
                 <div class="">
-                    <h1 class="mt-5">Cache Logs</h1>
+                    <h1 class="">Cache Logs</h1>
                     ${filtersHtml}
                     ${logsTableHtml}
                 </div>

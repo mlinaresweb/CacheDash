@@ -14,63 +14,6 @@ export function generateKeyStatsViewHtml(service: string, keyStats: KeyStats[], 
     <head>
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-        <style>
-            body {
-                background-color: #f8f9fa;
-                display: flex;
-                margin: 0;
-                padding: 0;
-            }
-            .content {
-                margin-left: 290px; /* Adjusting for sidebar width plus some spacing */
-                margin-right: 40px; /* Adding right margin */
-                padding: 20px;
-                width: calc(100% - 330px); /* Adjusting width to fill the remaining space */
-            }
-            .button { cursor: pointer; }
-            .dropdown { margin-right: 5px; }
-            .table thead th { border-bottom: 2px solid #dee2e6; }
-            .table thead th.sortable:hover { cursor: pointer; background-color: #f1f1f1; }
-            .pagination { justify-content: center; margin-top: 20px; }
-            .pagination .page-item.active .page-link { background-color: #007bff; border-color: #007bff; }
-            .btn-group { display: flex; justify-content: flex-end; }
-            .btn-group .btn { margin-right: 5px; }
-            @media (max-width: 576px) {
-                .btn-group { flex-direction: column; align-items: stretch; }
-                .btn-group .btn { margin-bottom: 5px; margin-right: 0; }
-                .form-inline { flex-direction: column; align-items: stretch; }
-                .form-inline .form-control { margin-bottom: 5px; }
-            }
-            .table-responsive { 
-                overflow-x: auto; 
-                -webkit-overflow-scrolling: touch; 
-                display: block;
-            }
-            .truncate {
-                max-width: 200px;
-                white-space: normal;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                word-wrap: break-word;
-            }
-            .actions {
-                display: flex;
-                gap: 5px;
-            }
-            .alert {
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                z-index: 1050;
-            }
-            @keyframes fadeOut {
-                from { opacity: 1; }
-                to { opacity: 0; }
-            }
-            .alert.hide {
-                animation: fadeOut 0.5s forwards;
-            }
-        </style>
         <script>
             const socket = new WebSocket('ws://localhost:8081');
     
@@ -230,7 +173,7 @@ export function generateKeyStatsViewHtml(service: string, keyStats: KeyStats[], 
         <div id="alertPlaceholder" class=""></div>
        
             <a href="/cache-key-stats" class="btn btn-secondary mb-4"><i class="fas fa-arrow-left"></i> Back to Services List</a>
-            <h2 class="mb-4">Service: ${service}</h2>
+            <h1 class="mb-4">Service: ${service}</h1>
             <div class="btn-group mb-4">
                 <button class="btn btn-danger" onclick="flushCache('${service}')">Flush Cache</button>
                 <button class="btn btn-success" onclick="exportToCsv('${service}')">Export to CSV</button>

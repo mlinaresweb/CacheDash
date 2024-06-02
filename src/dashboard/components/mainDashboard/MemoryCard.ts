@@ -20,7 +20,7 @@ export function generateMemoryCardHtml(stats: Map<string, any>): string {
         const maxMemoryText = maxMemorySizeMB !== undefined ? `${maxMemorySizeMB} MB` : 'NO LIMIT';
 
         cards += `
-            <div class="card">
+            <div class="card card-maindashboard">
                 <h2>${serviceIdentifier}</h2>
                 <div class="circular-loader" style="--percentage: ${usagePercentage}; --color: ${color};">
                     <div class="circle">
@@ -46,5 +46,5 @@ export function generateMemoryCardHtml(stats: Map<string, any>): string {
         `;
     });
 
-    return `<div class="cards-container">${cards}</div>`;
+    return `<div class="cards-container cards-container-maindashboard">${cards}</div>`;
 }

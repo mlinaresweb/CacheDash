@@ -25,6 +25,49 @@ export function generateChartsHtml(labels: string[], hits: number[], misses: num
             const simplifiedKeyResponseLabels = keyResponseLabels.map(label => label.split('/').pop());
             const simplifiedUncachedKeyResponseLabels = uncachedKeyResponseLabels.map(label => label.split('/').pop());
 
+            const commonOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        ticks: {
+                            color: 'white'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.2)'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: 'white'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.2)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: 'white'
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            title: function(tooltipItems, data) {
+                                return tooltipItems.map(item => item.label);
+                            }
+                        },
+                        titleColor: 'white',
+                        bodyColor: 'white',
+                        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                        borderColor: 'rgba(255, 255, 255, 0.7)',
+                        borderWidth: 1
+                    }
+                }
+            };
+
             new Chart(ctxHitsMisses, {
                 type: 'bar',
                 data: {
@@ -47,23 +90,7 @@ export function generateChartsHtml(labels: string[], hits: number[], misses: num
                     ]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    tooltips: {
-                        callbacks: {
-                            title: function(tooltipItems, data) {
-                                return labels[tooltipItems[0].index];
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(200, 200, 200, 0.2)'
-                            }
-                        }
-                    }
+                    ...commonOptions
                 }
             });
 
@@ -80,23 +107,7 @@ export function generateChartsHtml(labels: string[], hits: number[], misses: num
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    tooltips: {
-                        callbacks: {
-                            title: function(tooltipItems, data) {
-                                return labels[tooltipItems[0].index];
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(200, 200, 200, 0.2)'
-                            }
-                        }
-                    }
+                    ...commonOptions
                 }
             });
 
@@ -113,23 +124,7 @@ export function generateChartsHtml(labels: string[], hits: number[], misses: num
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(200, 200, 200, 0.2)'
-                            }
-                        }
-                    },
-                    tooltips: {
-                        callbacks: {
-                            title: function(tooltipItems, data) {
-                                return keyResponseLabels[tooltipItems[0].index];
-                            }
-                        }
-                    }
+                    ...commonOptions
                 }
             });
 
@@ -146,23 +141,7 @@ export function generateChartsHtml(labels: string[], hits: number[], misses: num
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(200, 200, 200, 0.2)'
-                            }
-                        }
-                    },
-                    tooltips: {
-                        callbacks: {
-                            title: function(tooltipItems, data) {
-                                return uncachedKeyResponseLabels[tooltipItems[0].index];
-                            }
-                        }
-                    }
+                    ...commonOptions
                 }
             });
         }

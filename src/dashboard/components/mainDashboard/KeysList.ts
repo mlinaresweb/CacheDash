@@ -43,7 +43,7 @@ export function generateKeysListHtml(keyStatsRegistry: Map<string, Map<string, K
     keys.forEach(key => {
         rows += `
             <tr>
-                <td title="${key.key}">${key.simplifiedKey}</td>
+                <td class="truncate" title="${key.key}">${key.simplifiedKey}</td>
                 <td>${key.service}</td>
                 <td>${key.hits}</td>
                 <td>${key.misses}</td>
@@ -52,93 +52,67 @@ export function generateKeysListHtml(keyStatsRegistry: Map<string, Map<string, K
                 <td>${key.ttl}</td>
                 <td>${key.timeRemaining}</td>
                 <td>${key.size}</td>
-                <td>
-                    <button class="btn btn-danger btn-sm" onclick="globalDeleteKey('${key.service}', '${key.key}')">Delete</button>
-                    <button class="btn btn-primary btn-sm" onclick="globalRefreshKey('${key.service}', '${key.key}')">Refresh</button>
-                    <button class="btn btn-secondary btn-sm" onclick="showTtlModal('${key.service}', '${key.key}', ${key.ttl})">Update TTL</button>
+                <td class="actions">
+                    <button class="btn btn-danger btn-sm" onclick="globalDeleteKey('${key.service}', '${key.key}')"><i class="fas fa-trash-alt"></i></button>
+                    <button class="btn btn-primary btn-sm" onclick="globalRefreshKey('${key.service}', '${key.key}')"><i class="fas fa-sync-alt"></i></button>
+                    <button class="btn btn-secondary btn-sm" onclick="showTtlModal('${key.service}', '${key.key}', ${key.ttl})"><i class="fas fa-cog"></i></button>
                 </td>
             </tr>
         `;
     });
 
     return `
-        <div class="keys-section">
-            <div class="keys-filters mb-3">
-                <div class="row flex-nowrap flex-wrap flex-lg-row align-items-end">
-                    <div class="col-12 col-md-6 d-flex mb-2 mb-md-0" style="gap: 10px;">
-                        <select id="sort-by" class="form-select me-2" onchange="sortTable('keys-table')" aria-label="Sort by">
-                            <option value="size">Size</option>
-                            <option value="key">Key</option>
-                            <option value="service">Service</option>
-                            <option value="hits">Hits</option>
-                            <option value="misses">Misses</option>
-                            <option value="setTime">Set Time</option>
-                            <option value="endTime">End Time</option>
-                            <option value="ttl">TTL</option>
-                            <option value="timeRemaining">Time Remaining</option>
-                        </select>
-                        <select id="sort-direction" class="form-select" onchange="sortTable('keys-table')" aria-label="Sort direction">
-                            <option value="asc">Ascendente</option>
-                            <option value="desc">Descendente</option>
-                        </select>
-                    </div>
-                    <div class="col-12 col-md-6 mb-2 mb-md-0">
-                        <input type="text" id="search-key" class="form-control" oninput="filterTable('keys-table')" placeholder="Search">
-                    </div>
+    <div class="global-actions mt-3">
+        <button class="btn btn-danger" onclick="globalFlushCache()">Flush All Caches</button>
+        <a href="/dashboard/estadisticas" class="btn btn-info">Statistics</a>
+    </div>
+    <div class="keys-section">
+        <div class="keys-filters mb-3">
+            <div class="row flex-nowrap flex-wrap flex-lg-row align-items-end">
+                <div class="col-12 col-md-6 d-flex mb-2 mb-md-0" style="gap: 10px;">
+                    <select id="sort-by" class="form-select me-2" onchange="sortTable('keys-table')" aria-label="Sort by">
+                        <option value="size">Size</option>
+                        <option value="key">Key</option>
+                        <option value="service">Service</option>
+                        <option value="hits">Hits</option>
+                        <option value="misses">Misses</option>
+                        <option value="setTime">Set Time</option>
+                        <option value="endTime">End Time</option>
+                        <option value="ttl">TTL</option>
+                        <option value="timeRemaining">Time Remaining</option>
+                    </select>
+                    <select id="sort-direction" class="form-select" onchange="sortTable('keys-table')" aria-label="Sort direction">
+                        <option value="asc">Ascendente</option>
+                        <option value="desc">Descendente</option>
+                    </select>
                 </div>
-            </div>
-            <div class="keys-list-container">
-                <table id="keys-table" class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Key</th>
-                            <th>Service</th>
-                            <th>Hits</th>
-                            <th>Misses</th>
-                            <th>Set Time</th>
-                            <th>End Time</th>
-                            <th>TTL</th>
-                            <th>Time Remaining</th>
-                            <th>Size</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${rows}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div class="global-actions mt-3">
-            <button class="btn btn-danger" onclick="globalFlushCache()">Flush All Caches</button>
-        </div>
-        <!-- Modal for updating TTL -->
-        <div class="modal fade" id="ttlModal" tabindex="-1" role="dialog" aria-labelledby="ttlModalLabel" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="ttlModalLabel">Update TTL</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="ttlForm">
-                            <div class="form-group">
-                                <label for="newTtl">New TTL (seconds)</label>
-                                <input type="number" class="form-control" id="newTtl" required>
-                            </div>
-                            <input type="hidden" id="modalService">
-                            <input type="hidden" id="modalKey">
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary" onclick="updateTtl()">Save changes</button>
-                    </div>
+                <div class="col-12 col-md-6 mb-2 mb-md-0">
+                    <input type="text" id="search-key" class="form-control" oninput="filterTable('keys-table')" placeholder="Search">
                 </div>
             </div>
         </div>
+        <div class="keys-list-container">
+            <table id="keys-table" class="table table-striped mt-4">
+                <thead>
+                    <tr>
+                        <th class="truncate">Key</th>
+                        <th>Service</th>
+                        <th>Hits</th>
+                        <th>Misses</th>
+                        <th>Set Time</th>
+                        <th>End Time</th>
+                        <th>TTL</th>
+                        <th>Time Remaining</th>
+                        <th>Size</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows}
+                </tbody>
+            </table>
+        </div>
+    </div>
         <script>
             const socket = new WebSocket('ws://localhost:8081');
 
