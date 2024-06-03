@@ -15,6 +15,8 @@ export function generateChartsHtml(labels: string[], hits: number[], misses: num
             </div>
         </div>
         <script>
+        let cacheStatsChartHitsMisses, cacheStatsChartSizes, responseTimeChart, uncachedResponseTimeChart;
+
         function renderChart(labels, hits, misses, sizes, averageResponseTime, keyResponseTimes, keyResponseLabels, uncachedKeyResponseTimes, uncachedKeyResponseLabels) {
             const ctxHitsMisses = document.getElementById('cacheStatsChartHitsMisses').getContext('2d');
             const ctxSizes = document.getElementById('cacheStatsChartSizes').getContext('2d');
@@ -25,50 +27,7 @@ export function generateChartsHtml(labels: string[], hits: number[], misses: num
             const simplifiedKeyResponseLabels = keyResponseLabels.map(label => label.split('/').pop());
             const simplifiedUncachedKeyResponseLabels = uncachedKeyResponseLabels.map(label => label.split('/').pop());
 
-            const commonOptions = {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        ticks: {
-                            color: 'white'
-                        },
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.2)'
-                        }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            color: 'white'
-                        },
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.2)'
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        labels: {
-                            color: 'white'
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            title: function(tooltipItems, data) {
-                                return tooltipItems.map(item => item.label);
-                            }
-                        },
-                        titleColor: 'white',
-                        bodyColor: 'white',
-                        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                        borderColor: 'rgba(255, 255, 255, 0.7)',
-                        borderWidth: 1
-                    }
-                }
-            };
-
-            new Chart(ctxHitsMisses, {
+            cacheStatsChartHitsMisses = new Chart(ctxHitsMisses, {
                 type: 'bar',
                 data: {
                     labels: simplifiedLabels,
@@ -90,11 +49,27 @@ export function generateChartsHtml(labels: string[], hits: number[], misses: num
                     ]
                 },
                 options: {
-                    ...commonOptions
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    tooltips: {
+                        callbacks: {
+                            title: function(tooltipItems, data) {
+                                return labels[tooltipItems[0].index];
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(200, 200, 200, 0.2)'
+                            }
+                        }
+                    }
                 }
             });
 
-            new Chart(ctxSizes, {
+            cacheStatsChartSizes = new Chart(ctxSizes, {
                 type: 'bar',
                 data: {
                     labels: simplifiedLabels,
@@ -107,11 +82,27 @@ export function generateChartsHtml(labels: string[], hits: number[], misses: num
                     }]
                 },
                 options: {
-                    ...commonOptions
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    tooltips: {
+                        callbacks: {
+                            title: function(tooltipItems, data) {
+                                return labels[tooltipItems[0].index];
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(200, 200, 200, 0.2)'
+                            }
+                        }
+                    }
                 }
             });
 
-            new Chart(ctxResponseTime, {
+            responseTimeChart = new Chart(ctxResponseTime, {
                 type: 'bar',
                 data: {
                     labels: simplifiedKeyResponseLabels,
@@ -124,11 +115,27 @@ export function generateChartsHtml(labels: string[], hits: number[], misses: num
                     }]
                 },
                 options: {
-                    ...commonOptions
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(200, 200, 200, 0.2)'
+                            }
+                        }
+                    },
+                    tooltips: {
+                        callbacks: {
+                            title: function(tooltipItems, data) {
+                                return keyResponseLabels[tooltipItems[0].index];
+                            }
+                        }
+                    }
                 }
             });
 
-            new Chart(ctxUncachedResponseTime, {
+            uncachedResponseTimeChart = new Chart(ctxUncachedResponseTime, {
                 type: 'bar',
                 data: {
                     labels: simplifiedUncachedKeyResponseLabels,
@@ -141,11 +148,51 @@ export function generateChartsHtml(labels: string[], hits: number[], misses: num
                     }]
                 },
                 options: {
-                    ...commonOptions
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(200, 200, 200, 0.2)'
+                            }
+                        }
+                    },
+                    tooltips: {
+                        callbacks: {
+                            title: function(tooltipItems, data) {
+                                return uncachedKeyResponseLabels[tooltipItems[0].index];
+                            }
+                        }
+                    }
                 }
             });
         }
-            
+
+        function updateCharts(data) {
+            const { labels, hits, misses, sizes, keyResponseTimes, keyResponseLabels, uncachedKeyResponseTimes, uncachedKeyResponseLabels } = data;
+            const simplifiedLabels = labels.map(label => label.split('/').pop());
+            const simplifiedKeyResponseLabels = keyResponseLabels.map(label => label.split('/').pop());
+            const simplifiedUncachedKeyResponseLabels = uncachedKeyResponseLabels.map(label => label.split('/').pop());
+
+            cacheStatsChartHitsMisses.data.labels = simplifiedLabels;
+            cacheStatsChartHitsMisses.data.datasets[0].data = hits;
+            cacheStatsChartHitsMisses.data.datasets[1].data = misses;
+            cacheStatsChartHitsMisses.update();
+
+            cacheStatsChartSizes.data.labels = simplifiedLabels;
+            cacheStatsChartSizes.data.datasets[0].data = sizes;
+            cacheStatsChartSizes.update();
+
+            responseTimeChart.data.labels = simplifiedKeyResponseLabels;
+            responseTimeChart.data.datasets[0].data = keyResponseTimes;
+            responseTimeChart.update();
+
+            uncachedResponseTimeChart.data.labels = simplifiedUncachedKeyResponseLabels;
+            uncachedResponseTimeChart.data.datasets[0].data = uncachedKeyResponseTimes;
+            uncachedResponseTimeChart.update();
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             renderChart(${JSON.stringify(labels)}, ${JSON.stringify(hits)}, ${JSON.stringify(misses)}, ${JSON.stringify(sizes)}, ${averageResponseTime}, ${JSON.stringify(keyResponseTimes)}, ${JSON.stringify(keyResponseLabels)}, ${JSON.stringify(uncachedKeyResponseTimes)}, ${JSON.stringify(uncachedKeyResponseLabels)});
         });

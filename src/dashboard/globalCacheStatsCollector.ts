@@ -282,4 +282,11 @@ export class GlobalCacheStatsCollector {
     public async broadcastUpdateGlobalDashboard(service: string): Promise<void> {
         await broadcasts.broadcastUpdateGlobalDashboard(service);
     }
+
+    public async broadcastUpdateGlobalStats(): Promise<void> {
+        await broadcasts.broadcastUpdateGlobalStats();
+    }
+    public async broadcastUpdateServiceStats(service: string): Promise<void> {
+        await broadcasts.broadcastUpdateServiceStats(service);
+    }
 }

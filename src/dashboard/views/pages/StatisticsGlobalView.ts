@@ -2,7 +2,6 @@ import { generateSummaryHtml } from '../../components/statistics/Summary';
 import { generateRatiosHtml } from '../../components/statistics/Ratios';
 import { generateChartsHtml } from '../../components/statistics/Charts';
 
-
 export function generateStatisticsGlobalViewHtml(
     service: string, 
     labels: string[], 
@@ -30,10 +29,39 @@ export function generateStatisticsGlobalViewHtml(
     return `
     <a href="/dashboard" class="btn btn-secondary mb-4"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
     <div class="summary-wrapper">
-                ${summaryHtml}
-                ${ratiosHtml}
-            </div>
-            <h2 class="title">${service} - Statistics</h2>
-            ${chartsHtml}
+        ${summaryHtml}
+        ${ratiosHtml}
+    </div>
+    <h2 class="title">${service} - Statistics</h2>
+    ${chartsHtml}
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const socket = new WebSocket('ws://localhost:8081');
+        
+        socket.addEventListener('message', function (event) {
+            const data = JSON.parse(event.data);
+            
+            if (data.type === 'UPDATE_GLOBAL_STATISTICS') {
+                updateStatistics(data.html);
+                updateCharts(data);
+            }
+        });
+    });
+    
+    function updateStatistics(html) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+    
+        // Update summary
+        const summaryWrapper = document.querySelector('.summary-wrapper');
+        const newSummaryWrapper = doc.querySelector('.summary-wrapper');
+        if (summaryWrapper && newSummaryWrapper) {
+            summaryWrapper.innerHTML = newSummaryWrapper.innerHTML;
+        }
+    }
+    </script>
+    
+    
     `;
 }

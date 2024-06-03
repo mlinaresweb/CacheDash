@@ -75,6 +75,9 @@ export class LocalCacheService {
         await GlobalCacheStatsCollector.getInstance().broadcastUpdateDashboard(this.serviceIdentifier);
         await GlobalCacheStatsCollector.getInstance().broadcastUpdateGlobalDashboard(this.serviceIdentifier);
         await GlobalCacheStatsCollector.getInstance().broadcastUpdateLogs();
+        await GlobalCacheStatsCollector.getInstance().broadcastUpdateGlobalStats();
+        await GlobalCacheStatsCollector.getInstance().broadcastUpdateServiceStats(this.serviceIdentifier);
+
     }
 
     private onDelete(key: string): void {
