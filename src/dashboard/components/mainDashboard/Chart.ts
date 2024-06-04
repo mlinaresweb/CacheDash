@@ -12,7 +12,7 @@ export function generateChartHtml(): string {
                     const data = Object.values(callHistory);
 
                     const ctx = document.getElementById('allServicesCacheCallsChart').getContext('2d');
-                    new Chart(ctx, {
+                    const allServicesCacheCallsChart = new Chart(ctx, {
                         type: 'line',
                         data: {
                             labels: labels,
@@ -22,9 +22,9 @@ export function generateChartHtml(): string {
                                 borderColor: 'rgba(75, 192, 192, 1)',
                                 borderWidth: 1,
                                 fill: false,
-                                backgroundColor: 'rgba(75, 192, 192, 0.2)', // Fondo del área debajo de la línea
-                                pointBackgroundColor: 'rgba(75, 192, 192, 1)', // Color de los puntos
-                                pointBorderColor: '#fff' // Borde de los puntos
+                                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+                                pointBorderColor: '#fff'
                             }]
                         },
                         options: {
@@ -73,6 +73,26 @@ export function generateChartHtml(): string {
                             }
                         }
                     });
+
+                    // WebSocket para actualizar el gráfico en tiempo real
+                    const socket = new WebSocket('ws://localhost:8081');
+
+                    socket.addEventListener('message', function (event) {
+                        const data = JSON.parse(event.data);
+                        
+                        if (data.type === 'UPDATE_GLOBAL_DASHBOARD') {
+                            updateChart(data.callHistory);
+                        }
+                    });
+
+                    function updateChart(callHistory) {
+                        const labels = Object.keys(callHistory);
+                        const data = Object.values(callHistory);
+
+                        allServicesCacheCallsChart.data.labels = labels;
+                        allServicesCacheCallsChart.data.datasets[0].data = data;
+                        allServicesCacheCallsChart.update();
+                    }
                 });
             </script>
         </div>

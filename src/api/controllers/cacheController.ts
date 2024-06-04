@@ -2,16 +2,20 @@ import { Request, Response } from 'express';
 import { CacheServiceCreate } from '../../cacheServiceCreate';
 
 // Instanciar el servicio de caché
-const cacheService = CacheServiceCreate.create({ cacheType: 'local', defaultTTL: 60, enableMonitoring: true, serviceIdentifier: 'STATIC_DATA_SERVICE_REDIS' });
+const cacheService = CacheServiceCreate.create({ cacheType: 'local', defaultTTL: 60, enableMonitoring: true, serviceIdentifier: 'STATIC_DATA_SERVICE_REDIS', maxMemorySizeMB:200 });
 
 export const addKey = async (req: Request, res: Response): Promise<void> => {
-    const { key, value, ttl } = req.body;
+    const { key, sizeMB, ttl } = req.body;
 
     try {
+        // Generar un valor grande (por ejemplo, un string repetido)
+        const sizeInBytes = sizeMB * 1024 * 1024;
+        const value = 'A'.repeat(sizeInBytes);
+
         await cacheService.set(key, value, ttl);
         res.json({ message: 'Key added successfully' });
-    } catch (error) {
-        res.status(500).json({ message: 'Failed to add key' });
+    } catch (error:any) {
+        res.status(500).json({ message: 'Failed to add key', error: error.message });
     }
 };
 
@@ -25,7 +29,7 @@ export const getKey = async (req: Request, res: Response): Promise<void> => {
         } else {
             res.json({ key, value });
         }
-    } catch (error) {
-        res.status(500).json({ message: 'Failed to get key' });
+    } catch (error:any) {
+        res.status(500).json({ message: 'Failed to get key', error: error.message });
     }
 };

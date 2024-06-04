@@ -73,6 +73,7 @@ export class GlobalCacheStatsCollector {
             this.statsRegistry.set(identifier, { ...existingStats, ...stats });
         }
     }
+    
     public getServiceRegistry(): Map<string, LocalCacheService | RedisCacheService> {
         return this.serviceRegistry;
     }
