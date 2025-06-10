@@ -8,7 +8,7 @@ import { GlobalCacheStatsCollector } from './dashboard/globalCacheStatsCollector
 export interface CacheServiceConfig {
     cacheType?: CacheType;
     defaultTTL?: number;
-    redisOptions?: RedisOptions;
+    redisOptions?: RedisOptions | string;
     serviceIdentifier?: string;
     enableMonitoring?: boolean;
     maxMemorySizeMB?: number;

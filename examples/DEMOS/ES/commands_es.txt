@@ -1,0 +1,45 @@
+// # ─── CRUD BÁSICO ───────────────────────────────────────────
+// set user:1 {"id":1,"name":"Ada"} 60          # crea ‑ ttl 60 s
+// get user:1                                   # lee
+// set user:1 {"id":1,"name":"Ada Lovelace"}    # actualiza (ttl infinito)
+// ttl user:1                                   # ttl restante
+// expire user:1 120                            # nuevo ttl 120 s
+// persist user:1                               # quita ttl (∞)
+// has user:1                                   # comprueba existencia
+// del user:1                                   # borra
+// get user:1                                   # miss
+
+// # ─── LISTADO Y MÉTRICAS ───────────────────────────────────
+// set product:42 {"sku":42,"price":99.9} 30
+// set flag true                                # valor booleano
+// list                                         # tabla resumen
+// stats                                        # stats globales
+// keystats product:42                          # stats de una clave
+
+// # ─── GESTIÓN EN MASA / STRESS TEST ─────────────────────────
+// mass 50                                      # 50 claves aleatorias, ttl 30 s
+// flush                                        # limpia todo
+
+// # ─── SNAPSHOT / IMPORT‑EXPORT ─────────────────────────────
+// dump snapshot.json                           # exporta a disco
+// load snapshot.json                           # importa
+// csv stats.csv                                # key‑stats → CSV
+
+// # ─── CONFIG EN CALIENTE ───────────────────────────────────
+// config show                                  # ver TTL por defecto & memoria
+// config ttl 300                               # TTL por defecto 5 min
+// config maxmem 256                            # 256 MB límite memoria
+
+// # ─── MONITORIZACIÓN Y SERVICIOS ───────────────────────────
+// monitor off                                  # detener dashboard
+// monitor on                                   # reactivar
+// services                                     # lista de servicios registrados
+// globalstats                                  # stats de todos los servicios
+
+// # ─── HISTORIAL DE LLAMADAS ─────────────────────────────────
+// calls                                        # últimas 24 h (servicio actual)
+// calls --all                                  # combinado de todos
+
+# ─── SALIR ────────────────────────────────────────────────
+help                                         # recordatorio de ayuda
+exit                                         # cierra la demo

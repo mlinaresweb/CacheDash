@@ -1,0 +1,45 @@
+// # ─── BASIC CRUD ───────────────────────────────────────────
+// set user:1 {"id":1,"name":"Ada"} 60          # create – ttl 60s
+// get user:1                                   # read
+// set user:1 {"id":1,"name":"Ada Lovelace"}    # update (infinite ttl)
+// ttl user:1                                   # remaining ttl
+// expire user:1 120                            # new ttl 120s
+// persist user:1                               # remove ttl (∞)
+// has user:1                                   # check existence
+// del user:1                                   # delete
+// get user:1                                   # miss
+
+// # ─── LIST AND METRICS ───────────────────────────────────
+// set product:42 {"sku":42,"price":99.9} 30
+// set flag true                                # boolean value
+// list                                         # summary table
+// stats                                        # global stats
+// keystats product:42                          # stats for a key
+
+// # ─── BULK MANAGEMENT / STRESS TEST ─────────────────────────
+// mass 50                                      # 50 random keys, ttl 30s
+// flush                                        # clears everything
+
+// # ─── SNAPSHOT / IMPORT‑EXPORT ─────────────────────────────
+// dump snapshot.json                           # export to disk
+// load snapshot.json                           # import
+// csv stats.csv                                # key‑stats → CSV
+
+// # ─── HOT CONFIGURATION ───────────────────────────────────
+// config show                                  # view default TTL & memory
+// config ttl 300                               # default TTL 5 min
+// config maxmem 256                            # 256 MB memory limit
+
+// # ─── MONITORING & SERVICES ───────────────────────────
+// monitor off                                  # stop dashboard
+// monitor on                                   # reactivate
+// services                                     # list registered services
+// globalstats                                  # stats of all services
+
+// # ─── CALL HISTORY ────────────────────────────────────────
+// calls                                        # last 24 h (current service)
+// calls --all                                  # combined from all
+
+// # ─── EXIT ────────────────────────────────────────────────
+// help                                         # help reminder
+// exit                                         # close the demo

@@ -20,9 +20,9 @@ export class RedisCacheService {
     private usageFrequency: Map<string, number> = new Map();
     private callHistory: { [timestamp: string]: number } = {};
 
-    constructor(redisOptions: RedisOptions, defaultTTL?: number, serviceIdentifier: string = "RedisService", maxMemorySize?: number) {
-        this.redisClient = new IORedis(redisOptions);
-        this.subscriberClient = new IORedis(redisOptions);
+    constructor(redisOptions: RedisOptions | string, defaultTTL?: number, serviceIdentifier: string = "RedisService", maxMemorySize?: number) {
+        this.redisClient = new IORedis(redisOptions as RedisOptions);
+        this.subscriberClient = new IORedis(redisOptions as RedisOptions);
         this.defaultTTL = defaultTTL;
         this.serviceIdentifier = serviceIdentifier;
         this.maxMemorySize = maxMemorySize;
