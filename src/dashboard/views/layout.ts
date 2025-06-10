@@ -5,7 +5,7 @@ export function generateLayoutHtml(content: string): string {
     return `
         <html>
         <head>
-            <title>Dashboard</title>
+            <title>CacheDash Dashboard</title>
             <link rel="stylesheet" href="/styles/styles.css"> 
             <link rel="stylesheet" href="/styles/sidebar.css"> 
             <link rel="stylesheet" href="/styles/keyStats.css"> 

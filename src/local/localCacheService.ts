@@ -1,3 +1,4 @@
+//localCacheService.TS
 import NodeCache from 'node-cache';
 import { gzip, gunzip } from 'zlib';
 import { promisify } from 'util';
@@ -18,8 +19,9 @@ export class LocalCacheService {
     private maxMemorySize?: number;
     private usageFrequency: Map<string, number> = new Map();
     private callHistory: { [timestamp: string]: number } = {};
-
-    constructor(defaultTTL?: number, serviceIdentifier: string = "DefaultService", maxMemorySize?: number) {
+    private testMode: boolean;
+    
+    constructor(defaultTTL?: number, serviceIdentifier: string = "DefaultService", maxMemorySize?: number, testMode: boolean = false) {
         this.localCache = new NodeCache({
             stdTTL: defaultTTL,
             checkperiod: 60,
@@ -29,18 +31,20 @@ export class LocalCacheService {
         this.defaultTTL = defaultTTL;
         this.serviceIdentifier = serviceIdentifier;
         this.maxMemorySize = maxMemorySize;
+        this.testMode = testMode;
 
         this.localCache.on('del', this.onDelete.bind(this));
         this.localCache.on('expired', this.onExpired.bind(this));
         this.localCache.on('flush', this.onFlush.bind(this));
 
         GlobalCacheStatsCollector.getInstance().registerCacheService(this.serviceIdentifier, this.getStats(), this, maxMemorySize);
-
+        if (!this.testMode) {
         setInterval(this.cleanUpOldCalls.bind(this), 3600000); // Ejecutar la limpieza cada hora
 
         // Ejecutar la verificación de memoria periódicamente
         if (this.maxMemorySize !== undefined) {
             setInterval(this.enforceMemoryLimit.bind(this), 60000); // Cada minuto
+        }
         }
     }
 
@@ -147,6 +151,9 @@ export class LocalCacheService {
 
     private async compressData<T>(data: T): Promise<Buffer> {
         const jsonData = JSON.stringify(data);
+          if (this.testMode) {
+        return Buffer.from(jsonData);
+        }
         if (jsonData.length > 1024) {
             return await gzipAsync(jsonData);
         }
@@ -162,46 +169,79 @@ export class LocalCacheService {
         }
     }
 
-    public async get<T>(key: string): Promise<T | undefined> {
-        const startTime = Date.now();
-        try {
-            const value = this.localCache.get<Buffer>(key);
-            if (value !== undefined) {
-                const decompressedData = await this.decompressData(value);
-                const responseTime = Date.now() - startTime;
-                this.updateKeyStats(key, 'hit', 0, responseTime);
-                logger.log(this.serviceIdentifier, `Cache hit: ${key}`, 'hit');
-                this.stats.hits++;
-                GlobalCacheStatsCollector.getInstance().incrementStats(this.serviceIdentifier, { hits: 1 });
-                this.notifyChange();
-                this.recordCall();
-                return decompressedData as T;
-            } else {
-                if (this.triedKeys.has(key)) {
-                    this.stats.misses++;
-                    this.updateKeyStats(key, 'miss');
-                    logger.log(this.serviceIdentifier, `Cache miss: ${key}`, 'miss');
-                    GlobalCacheStatsCollector.getInstance().incrementStats(this.serviceIdentifier, { misses: 1 });
-                    this.notifyChange();
-                } else {
-                    this.triedKeys.add(key);
-                }
-                return undefined;
-            }
-        } catch (error) {
-            logger.log(this.serviceIdentifier, `Local cache get error: ${error}`, 'error');
-            if (this.triedKeys.has(key)) {
-                this.stats.misses++;
-                this.updateKeyStats(key, 'miss');
-                logger.log(this.serviceIdentifier, `Cache miss due to error: ${key}`, 'error');
-                GlobalCacheStatsCollector.getInstance().incrementStats(this.serviceIdentifier, { misses: 1 });
-                this.notifyChange();
-            } else {
-                this.triedKeys.add(key);
-            }
-            return undefined;
-        }
+    // public async get<T>(key: string): Promise<T | undefined> {
+    //     const startTime = Date.now();
+    //     try {
+    //         const value = this.localCache.get<Buffer>(key);
+    //         if (value !== undefined) {
+    //             const decompressedData = await this.decompressData(value);
+    //             const responseTime = Date.now() - startTime;
+    //             this.updateKeyStats(key, 'hit', 0, responseTime);
+    //             logger.log(this.serviceIdentifier, `Cache hit: ${key}`, 'hit');
+    //             this.stats.hits++;
+    //             GlobalCacheStatsCollector.getInstance().incrementStats(this.serviceIdentifier, { hits: 1 });
+    //             this.notifyChange();
+    //             this.recordCall();
+    //             return decompressedData as T;
+    //         } else {
+    //             if (this.triedKeys.has(key)) {
+    //                 this.stats.misses++;
+    //                 this.updateKeyStats(key, 'miss');
+    //                 logger.log(this.serviceIdentifier, `Cache miss: ${key}`, 'miss');
+    //                 GlobalCacheStatsCollector.getInstance().incrementStats(this.serviceIdentifier, { misses: 1 });
+    //                 this.notifyChange();
+    //             } else {
+    //                 this.triedKeys.add(key);
+    //             }
+    //             return undefined;
+    //         }
+    //     } catch (error) {
+    //         logger.log(this.serviceIdentifier, `Local cache get error: ${error}`, 'error');
+    //         if (this.triedKeys.has(key)) {
+    //             this.stats.misses++;
+    //             this.updateKeyStats(key, 'miss');
+    //             logger.log(this.serviceIdentifier, `Cache miss due to error: ${key}`, 'error');
+    //             GlobalCacheStatsCollector.getInstance().incrementStats(this.serviceIdentifier, { misses: 1 });
+    //             this.notifyChange();
+    //         } else {
+    //             this.triedKeys.add(key);
+    //         }
+    //         return undefined;
+    //     }
+    // }
+public async get<T>(key: string): Promise<T | undefined> {
+  const startTime = Date.now();
+  try {
+    const buf = this.localCache.get<Buffer>(key);
+    if (buf !== undefined) {
+      const data = await this.decompressData(buf);
+      const responseTime = Date.now() - startTime;
+      this.updateKeyStats(key, 'hit', 0, responseTime);
+      logger.log(this.serviceIdentifier, `Cache hit: ${key}`, 'hit');
+      this.stats.hits++;
+      GlobalCacheStatsCollector.getInstance().incrementStats(this.serviceIdentifier, { hits: 1 });
+      this.notifyChange();
+      this.recordCall();
+      return data as T;
+    } else {
+      // cada miss cuenta siempre
+      this.stats.misses++;
+      this.updateKeyStats(key, 'miss');
+      logger.log(this.serviceIdentifier, `Cache miss: ${key}`, 'miss');
+      GlobalCacheStatsCollector.getInstance().incrementStats(this.serviceIdentifier, { misses: 1 });
+      this.notifyChange();
+      return undefined;
     }
+  } catch (error) {
+    logger.log(this.serviceIdentifier, `Local cache get error: ${error}`, 'error');
+    // en error también cuenta como miss
+    this.stats.misses++;
+    this.updateKeyStats(key, 'miss');
+    GlobalCacheStatsCollector.getInstance().incrementStats(this.serviceIdentifier, { misses: 1 });
+    this.notifyChange();
+    return undefined;
+  }
+}
 
     private incrementUsageFrequency(key: string): void {
         const currentFrequency = this.usageFrequency.get(key) || 0;
@@ -241,67 +281,115 @@ export class LocalCacheService {
         return leastUsedKey;
     }
 
-    public async set<T>(key: string, value: T, ttl?: number, isRefresh: boolean = false): Promise<void> {
-        const startTime = Date.now();
-        try {
-            const cacheTTL = ttl ?? this.defaultTTL;
-            if (typeof cacheTTL !== 'number') {
-                throw new Error('Cache TTL must be a number');
-            }
-            const compressedData = await this.compressData(value);
-            const oldValue = this.localCache.get<Buffer>(key) || Buffer.from('');
+    // public async set<T>(key: string, value: T, ttl?: number, isRefresh: boolean = false): Promise<void> {
+    //     const startTime = Date.now();
+    //     try {
+    //         const cacheTTL = ttl ?? this.defaultTTL;
+    //         if (typeof cacheTTL !== 'number') {
+    //             throw new Error('Cache TTL must be a number');
+    //         }
+    //         const compressedData = await this.compressData(value);
+    //         const oldValue = this.localCache.get<Buffer>(key) || Buffer.from('');
 
-            // Check if the value already exists and adjust the stats accordingly
-            if (oldValue.length > 0 && !isRefresh) {
-                this.stats.size = Math.max(0, this.stats.size - oldValue.length);
-            }
+    //         // Check if the value already exists and adjust the stats accordingly
+    //         if (oldValue.length > 0 && !isRefresh) {
+    //             this.stats.size = Math.max(0, this.stats.size - oldValue.length);
+    //         }
 
-            // Enforce memory limit before setting the new key
-            this.enforceMemoryLimit();
+    //         // Enforce memory limit before setting the new key
+    //         this.enforceMemoryLimit();
 
-            const endTime = Date.now() + cacheTTL * 1000;
+    //         const endTime = Date.now() + cacheTTL * 1000;
 
-            logger.log(this.serviceIdentifier, `Setting key: ${key}, TTL: ${cacheTTL}`, 'set');
-            this.localCache.set(key, compressedData, cacheTTL);
+    //         logger.log(this.serviceIdentifier, `Setting key: ${key}, TTL: ${cacheTTL}`, 'set');
+    //         this.localCache.set(key, compressedData, cacheTTL);
 
-            const responseTime = Date.now() - startTime;
-            this.updateKeyStats(key, 'set', compressedData.length, responseTime, isRefresh, endTime, cacheTTL);
+    //         const responseTime = Date.now() - startTime;
+    //         this.updateKeyStats(key, 'set', compressedData.length, responseTime, isRefresh, endTime, cacheTTL);
 
-            if (!oldValue || Buffer.compare(oldValue, compressedData) !== 0) {
-                if (!isRefresh) {
-                    this.stats.keysAdded++;
-                    this.stats.keys = this.localCache.keys().length;
-                }
-                this.stats.size += compressedData.length;
+    //         if (!oldValue || Buffer.compare(oldValue, compressedData) !== 0) {
+    //             if (!isRefresh) {
+    //                 this.stats.keysAdded++;
+    //                 this.stats.keys = this.localCache.keys().length;
+    //             }
+    //             this.stats.size += compressedData.length;
 
-                logger.log(this.serviceIdentifier, `Key added or updated: ${key}, total keys: ${this.stats.keys}, total size: ${this.stats.size}`, 'set');
+    //             logger.log(this.serviceIdentifier, `Key added or updated: ${key}, total keys: ${this.stats.keys}, total size: ${this.stats.size}`, 'set');
 
-                GlobalCacheStatsCollector.getInstance().incrementStats(this.serviceIdentifier, {
-                    keysAdded: !isRefresh ? 1 : 0,
-                    keys: this.localCache.keys().length,
-                    size: compressedData.length
-                });
-            } else if (isRefresh) {
-                // Here, we handle the case where the TTL is updated without changing the value
-                this.localCache.ttl(key, cacheTTL);
-                logger.log(this.serviceIdentifier, `TTL updated for key: ${key}`, 'set');
-            } else {
-                logger.log(this.serviceIdentifier, `Key set called, but value is unchanged: ${key}`, 'set');
-            }
+    //             GlobalCacheStatsCollector.getInstance().incrementStats(this.serviceIdentifier, {
+    //                 keysAdded: !isRefresh ? 1 : 0,
+    //                 keys: this.localCache.keys().length,
+    //                 size: compressedData.length
+    //             });
+    //         } else if (isRefresh) {
+    //             // Here, we handle the case where the TTL is updated without changing the value
+    //             this.localCache.ttl(key, cacheTTL);
+    //             logger.log(this.serviceIdentifier, `TTL updated for key: ${key}`, 'set');
+    //         } else {
+    //             logger.log(this.serviceIdentifier, `Key set called, but value is unchanged: ${key}`, 'set');
+    //         }
 
-            // Make sure to update the TTL in the keyStats
-            const keyStat = this.keyStats.get(key);
-            if (keyStat) {
-                keyStat.ttl = cacheTTL;
-                keyStat.endTime = endTime;
-            }
+    //         // Make sure to update the TTL in the keyStats
+    //         const keyStat = this.keyStats.get(key);
+    //         if (keyStat) {
+    //             keyStat.ttl = cacheTTL;
+    //             keyStat.endTime = endTime;
+    //         }
 
-            this.notifyChange();
-            this.recordCall();
-        } catch (error) {
-            logger.log(this.serviceIdentifier, `Local cache set error: ${error}`, 'error');
-        }
+    //         this.notifyChange();
+    //         this.recordCall();
+    //     } catch (error) {
+    //         logger.log(this.serviceIdentifier, `Local cache set error: ${error}`, 'error');
+    //     }
+    // }
+public async set<T>(key: string, value: T, ttl?: number, isRefresh: boolean = false): Promise<void> {
+  const startTime = Date.now();
+  try {
+    const cacheTTL = ttl ?? this.defaultTTL;
+    if (typeof cacheTTL !== 'number') {
+      throw new Error('Cache TTL must be a number');
     }
+    const compressedData = this.testMode
+      // en testMode guardamos JSON directo
+      ? Buffer.from(JSON.stringify(value))
+      : await this.compressData(value);
+
+    const oldValue = this.localCache.get<Buffer>(key) || Buffer.from('');
+    // Si ya existía y no refresh, restamos su tamaño
+    if (oldValue.length > 0 && !isRefresh) {
+      this.stats.size = Math.max(0, this.stats.size - oldValue.length);
+    }
+
+    logger.log(this.serviceIdentifier, `Setting key: ${key}, TTL: ${cacheTTL}`, 'set');
+    this.localCache.set(key, compressedData, cacheTTL);
+
+    // Actualizamos stats
+    const responseTime = Date.now() - startTime;
+    const endTime = Date.now() + cacheTTL * 1000;
+    this.updateKeyStats(key, 'set', compressedData.length, responseTime, isRefresh, endTime, cacheTTL);
+
+    if (!oldValue.length || Buffer.compare(oldValue, compressedData) !== 0) {
+      if (!isRefresh) {
+        this.stats.keysAdded++;
+        this.stats.keys = this.localCache.keys().length;
+      }
+      this.stats.size += compressedData.length;
+      GlobalCacheStatsCollector.getInstance().incrementStats(this.serviceIdentifier, {
+        keysAdded: !isRefresh ? 1 : 0,
+        keys: this.localCache.keys().length,
+        size: compressedData.length,
+      });
+    }
+
+    // ➡️ **Nuevo paso**: forzamos expulsión tras actualizar tamaño
+    this.enforceMemoryLimit();
+
+    this.notifyChange();
+    this.recordCall();
+  } catch (error) {
+    logger.log(this.serviceIdentifier, `Local cache set error: ${error}`, 'error');
+  }
+}
 
     public async del(key: string): Promise<void> {
         try {

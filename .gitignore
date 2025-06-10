@@ -1,6 +1,8 @@
 node_modules/
 static/
 dist/
+coverage/
+junit.xml
 # Local env files
 .env
 .env.*

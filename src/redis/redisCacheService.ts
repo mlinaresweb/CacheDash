@@ -1,3 +1,4 @@
+//redisCacheService.TS
 import IORedis, { RedisOptions } from 'ioredis';
 import { gzip, gunzip } from 'zlib';
 import { promisify } from 'util';
@@ -19,27 +20,31 @@ export class RedisCacheService {
     private maxMemorySize?: number;
     private usageFrequency: Map<string, number> = new Map();
     private callHistory: { [timestamp: string]: number } = {};
+    private testMode: boolean;
 
-    constructor(redisOptions: RedisOptions | string, defaultTTL?: number, serviceIdentifier: string = "RedisService", maxMemorySize?: number) {
+    constructor(redisOptions: RedisOptions | string, defaultTTL?: number, serviceIdentifier: string = "RedisService", maxMemorySize?: number, testMode: boolean = false) {
         this.redisClient = new IORedis(redisOptions as RedisOptions);
         this.subscriberClient = new IORedis(redisOptions as RedisOptions);
         this.defaultTTL = defaultTTL;
         this.serviceIdentifier = serviceIdentifier;
         this.maxMemorySize = maxMemorySize;
-
+        this.testMode = testMode;
+        
         GlobalCacheStatsCollector.getInstance().registerCacheService(this.serviceIdentifier, this.getStats(), this);
 
         this.initializeStats();
         this.setupEventListeners();
-
+ if (!this.testMode) {
         setInterval(this.cleanUpOldCalls.bind(this), 3600000); // Ejecutar la limpieza cada hora
 
         if (this.maxMemorySize !== undefined) {
             setInterval(this.enforceMemoryLimit.bind(this), 60000); // Cada minuto
         }
     }
+    }
 
     private setupEventListeners(): void {
+        if (this.testMode) return;  
         this.subscriberClient.config('SET', 'notify-keyspace-events', 'Ex').then(() => {
             this.subscriberClient.psubscribe(`__keyevent@${this.redisClient.options.db}__:expired`, (err, count) => {
                 if (err) {
@@ -198,54 +203,101 @@ export class RedisCacheService {
         }
     }
 
-    public async get<T>(key: string): Promise<T | undefined> {
-        const startTime = Date.now();
-        try {
-            const value = await this.redisClient.getBuffer(key);
-            if (value !== null) {
-                const decompressedData = await this.decompressData(value);
-                const responseTime = Date.now() - startTime;
+    // public async get<T>(key: string): Promise<T | undefined> {
+    //     const startTime = Date.now();
+    //     try {
+    //         const value =this.redisClient.getBuffer ? await this.redisClient.getBuffer(key): Buffer.from((await this.redisClient.get(key)) || '');
+    //         if (value !== null) {
+    //             const decompressedData = await this.decompressData(value);
+    //             const responseTime = Date.now() - startTime;
                 
-                // Update key size and stats if key not already in cache
-                if (!this.keyStats.has(key)) {
-                    const size = await this.getKeyMemoryUsage(key);
-                    this.updateKeyStats(key, 'set', size, responseTime, false, Date.now() + (await this.redisClient.ttl(key)) * 1000);
-                }
+    //             // Update key size and stats if key not already in cache
+    //             if (!this.keyStats.has(key)) {
+    //                 const size = await this.getKeyMemoryUsage(key);
+    //                 this.updateKeyStats(key, 'set', size, responseTime, false, Date.now() + (await this.redisClient.ttl(key)) * 1000);
+    //             }
                 
-                this.updateKeyStats(key, 'hit', 0, responseTime);
-                logger.log(this.serviceIdentifier, `Cache hit: ${key}`, 'hit');
-                this.stats.hits++;
-                GlobalCacheStatsCollector.getInstance().incrementStats(this.serviceIdentifier, { hits: 1 });
-                this.notifyChange();
-                this.recordCall();
-                return decompressedData as T;
-            } else {
-                if (this.triedKeys.has(key)) {
-                    this.stats.misses++;
-                    this.updateKeyStats(key, 'miss');
-                    logger.log(this.serviceIdentifier, `Cache miss: ${key}`, 'miss');
-                    GlobalCacheStatsCollector.getInstance().incrementStats(this.serviceIdentifier, { misses: 1 });
-                    this.notifyChange();
-                } else {
-                    this.triedKeys.add(key);
-                }
-                return undefined;
-            }
-        } catch (error) {
-            logger.log(this.serviceIdentifier, `Redis cache get error: ${error}`, 'error');
-            if (this.triedKeys.has(key)) {
-                this.stats.misses++;
-                this.updateKeyStats(key, 'miss');
-                logger.log(this.serviceIdentifier, `Cache miss due to error: ${key}`, 'error');
-                GlobalCacheStatsCollector.getInstance().incrementStats(this.serviceIdentifier, { misses: 1 });
-                this.notifyChange();
-            } else {
-                this.triedKeys.add(key);
-            }
-            return undefined;
-        }
+    //             this.updateKeyStats(key, 'hit', 0, responseTime);
+    //             logger.log(this.serviceIdentifier, `Cache hit: ${key}`, 'hit');
+    //             this.stats.hits++;
+    //             GlobalCacheStatsCollector.getInstance().incrementStats(this.serviceIdentifier, { hits: 1 });
+    //             this.notifyChange();
+    //             this.recordCall();
+    //             return decompressedData as T;
+    //         } else {
+    //             if (this.triedKeys.has(key)) {
+    //                 this.stats.misses++;
+    //                 this.updateKeyStats(key, 'miss');
+    //                 logger.log(this.serviceIdentifier, `Cache miss: ${key}`, 'miss');
+    //                 GlobalCacheStatsCollector.getInstance().incrementStats(this.serviceIdentifier, { misses: 1 });
+    //                 this.notifyChange();
+    //             } else {
+    //                 this.triedKeys.add(key);
+    //             }
+    //             return undefined;
+    //         }
+    //     } catch (error) {
+    //         logger.log(this.serviceIdentifier, `Redis cache get error: ${error}`, 'error');
+    //         if (this.triedKeys.has(key)) {
+    //             this.stats.misses++;
+    //             this.updateKeyStats(key, 'miss');
+    //             logger.log(this.serviceIdentifier, `Cache miss due to error: ${key}`, 'error');
+    //             GlobalCacheStatsCollector.getInstance().incrementStats(this.serviceIdentifier, { misses: 1 });
+    //             this.notifyChange();
+    //         } else {
+    //             this.triedKeys.add(key);
+    //         }
+    //         return undefined;
+    //     }
+    // }
+ public async get<T>(key: string): Promise<T | undefined> {
+  const startTime = Date.now();
+  try {
+    let raw: Buffer | null;
+    if (this.testMode) {
+      const str = await this.redisClient.get(key);
+      raw = str !== null ? Buffer.from(str) : null;
+    } else {
+      raw = await this.redisClient.getBuffer(key);
     }
 
+    if (raw !== null) {
+      const data = await this.decompressData(raw);
+      const responseTime = Date.now() - startTime;
+
+      if (!this.keyStats.has(key)) {
+        const size = this.testMode
+          ? Buffer.byteLength(raw.toString())
+          : await this.getKeyMemoryUsage(key);
+        const ttlSec = (await this.redisClient.ttl(key)) || 0;
+        this.updateKeyStats(key, 'set', size, responseTime, false, Date.now() + ttlSec * 1000, ttlSec);
+      }
+
+      this.updateKeyStats(key, 'hit', 0, responseTime);
+      logger.log(this.serviceIdentifier, `Cache hit: ${key}`, 'hit');
+      this.stats.hits++;
+      GlobalCacheStatsCollector.getInstance().incrementStats(this.serviceIdentifier, { hits: 1 });
+      this.notifyChange();
+      this.recordCall();
+
+      return data as T;
+    } else {
+      this.stats.misses++;
+      this.updateKeyStats(key, 'miss');
+      logger.log(this.serviceIdentifier, `Cache miss: ${key}`, 'miss');
+      GlobalCacheStatsCollector.getInstance().incrementStats(this.serviceIdentifier, { misses: 1 });
+      this.notifyChange();
+      return undefined;
+    }
+  } catch (error) {
+    logger.log(this.serviceIdentifier, `Redis cache get error: ${error}`, 'error');
+    this.stats.misses++;
+    this.updateKeyStats(key, 'miss');
+    GlobalCacheStatsCollector.getInstance().incrementStats(this.serviceIdentifier, { misses: 1 });
+    this.notifyChange();
+    return undefined;
+  }
+}
     private incrementUsageFrequency(key: string): void {
         const currentFrequency = this.usageFrequency.get(key) || 0;
         this.usageFrequency.set(key, currentFrequency + 1);
@@ -291,61 +343,129 @@ export class RedisCacheService {
         return leastUsedKey;
     }
 
-    public async set<T>(key: string, value: T, ttl?: number, isRefresh: boolean = false): Promise<void> {
-        const startTime = Date.now();
-        try {
-            const cacheTTL = ttl ?? this.defaultTTL;
-            if (typeof cacheTTL !== 'number') {
-                throw new Error('Cache TTL must be a number');
-            }
-            const compressedData = await this.compressData(value);
-            const oldValue = await this.redisClient.getBuffer(key);
+    // public async set<T>(key: string, value: T, ttl?: number, isRefresh: boolean = false): Promise<void> {
+    //     const startTime = Date.now();
+    //     try {
+    //         const cacheTTL = ttl ?? this.defaultTTL;
+    //         if (typeof cacheTTL !== 'number') {
+    //             throw new Error('Cache TTL must be a number');
+    //         }
+    //         const compressedData = await this.compressData(value);
+    //         const oldValue = await this.redisClient.getBuffer(key);
 
-            // Check if the value already exists and adjust the stats accordingly
-            if (oldValue && oldValue.length > 0 && !isRefresh) {
-                this.stats.size = Math.max(0, this.stats.size - oldValue.length);
-            }
+    //         // Check if the value already exists and adjust the stats accordingly
+    //         if (oldValue && oldValue.length > 0 && !isRefresh) {
+    //             this.stats.size = Math.max(0, this.stats.size - oldValue.length);
+    //         }
 
-            const endTime = Date.now() + cacheTTL * 1000;
+    //         const endTime = Date.now() + cacheTTL * 1000;
 
-            logger.log(this.serviceIdentifier, `Setting key: ${key}, TTL: ${cacheTTL}`, 'set');
-            await this.redisClient.set(key, compressedData, 'EX', cacheTTL);
+    //         logger.log(this.serviceIdentifier, `Setting key: ${key}, TTL: ${cacheTTL}`, 'set');
+    //         await this.redisClient.set(key, compressedData, 'EX', cacheTTL);
 
-            const responseTime = Date.now() - startTime;
-            this.updateKeyStats(key, 'set', compressedData.length, responseTime, isRefresh, endTime, cacheTTL);
+    //         const responseTime = Date.now() - startTime;
+    //         this.updateKeyStats(key, 'set', compressedData.length, responseTime, isRefresh, endTime, cacheTTL);
 
-            if (!oldValue || Buffer.compare(oldValue, compressedData) !== 0) {
-                if (!isRefresh) {
-                    this.stats.keysAdded++;
-                    this.stats.keys = await this.redisClient.dbsize();
-                }
-                this.stats.size += compressedData.length;
+    //         if (!oldValue || Buffer.compare(oldValue, compressedData) !== 0) {
+    //             if (!isRefresh) {
+    //                 this.stats.keysAdded++;
+    //                 this.stats.keys = await this.redisClient.dbsize();
+    //             }
+    //             this.stats.size += compressedData.length;
 
-                logger.log(this.serviceIdentifier, `Key added or updated: ${key}, total keys: ${this.stats.keys}, total size: ${this.stats.size}`, 'set');
+    //             logger.log(this.serviceIdentifier, `Key added or updated: ${key}, total keys: ${this.stats.keys}, total size: ${this.stats.size}`, 'set');
 
-                GlobalCacheStatsCollector.getInstance().incrementStats(this.serviceIdentifier, {
-                    keysAdded: !isRefresh ? 1 : 0,
-                    keys: await this.redisClient.dbsize(),
-                    size: compressedData.length
-                });
-            } else if (isRefresh) {
-                logger.log(this.serviceIdentifier, `TTL updated for key: ${key}`, 'set');
-            } else {
-                logger.log(this.serviceIdentifier, `Key set called, but value is unchanged: ${key}`, 'set');
-            }
+    //             GlobalCacheStatsCollector.getInstance().incrementStats(this.serviceIdentifier, {
+    //                 keysAdded: !isRefresh ? 1 : 0,
+    //                 keys: await this.redisClient.dbsize(),
+    //                 size: compressedData.length
+    //             });
+    //         } else if (isRefresh) {
+    //             logger.log(this.serviceIdentifier, `TTL updated for key: ${key}`, 'set');
+    //         } else {
+    //             logger.log(this.serviceIdentifier, `Key set called, but value is unchanged: ${key}`, 'set');
+    //         }
 
-            const keyStat = this.keyStats.get(key);
-            if (keyStat) {
-                keyStat.ttl = cacheTTL;
-                keyStat.endTime = endTime;
-            }
+    //         const keyStat = this.keyStats.get(key);
+    //         if (keyStat) {
+    //             keyStat.ttl = cacheTTL;
+    //             keyStat.endTime = endTime;
+    //         }
 
-            this.notifyChange();
-            this.recordCall();
-        } catch (error) {
-            logger.log(this.serviceIdentifier, `Redis cache set error: ${error}`, 'error');
-        }
+    //         this.notifyChange();
+    //         this.recordCall();
+    //     } catch (error) {
+    //         logger.log(this.serviceIdentifier, `Redis cache set error: ${error}`, 'error');
+    //     }
+    // }
+public async set<T>(key: string, value: T, ttl?: number, isRefresh: boolean = false): Promise<void> {
+  const startTime = Date.now();
+  try {
+    const cacheTTL = ttl ?? this.defaultTTL;
+    if (typeof cacheTTL !== 'number') throw new Error('Cache TTL must be a number');
+
+    // ── Serialización ───────────────────────────────────────
+    let payload: Buffer | string;
+    if (this.testMode) {
+      payload = JSON.stringify(value);
+    } else {
+      payload = await this.compressData(value);
     }
+
+    // ── Ajuste de tamaño previo ──────────────────────────────
+    const oldBuf = (!this.testMode && this.redisClient.getBuffer)
+      ? await this.redisClient.getBuffer(key)
+      : null;
+    if (oldBuf && oldBuf.length > 0 && !isRefresh) {
+      this.stats.size = Math.max(0, this.stats.size - oldBuf.length);
+    }
+
+    const endTime = Date.now() + cacheTTL * 1000;
+    logger.log(this.serviceIdentifier, `Setting key: ${key}, TTL: ${cacheTTL}`, 'set');
+
+    // ── Escritura en Redis ──────────────────────────────────
+    if (this.testMode) {
+      // Modo test: set simple + expire
+      await this.redisClient.set(key, payload as string);
+      if (cacheTTL) await this.redisClient.expire(key, cacheTTL);
+    } else {
+      // Producción: set con buffer y expiry
+      await this.redisClient.set(key, payload as Buffer, 'EX', cacheTTL);
+    }
+
+    // ── Registrar estadística de set ─────────────────────────
+    const responseTime = Date.now() - startTime;
+    const size = this.testMode
+      ? Buffer.byteLength(payload as string)
+      : await this.getKeyMemoryUsage(key);
+
+    this.updateKeyStats(key, 'set', size, responseTime, isRefresh, endTime, cacheTTL);
+    if (!oldBuf || (payload instanceof Buffer && Buffer.compare(oldBuf, payload) !== 0)) {
+      if (!isRefresh) {
+        this.stats.keysAdded++;
+        this.stats.keys = await this.redisClient.dbsize();
+      }
+      this.stats.size += size;
+      GlobalCacheStatsCollector.getInstance().incrementStats(this.serviceIdentifier, {
+        keysAdded: !isRefresh ? 1 : 0,
+        keys: this.stats.keys,
+        size,
+      });
+    }
+
+    // ── Actualizar TTL en keyStats ──────────────────────────
+    const ks = this.keyStats.get(key);
+    if (ks) {
+      ks.ttl = cacheTTL;
+      ks.endTime = endTime;
+    }
+
+    this.notifyChange();
+    this.recordCall();
+  } catch (error) {
+    logger.log(this.serviceIdentifier, `Redis cache set error: ${error}`, 'error');
+  }
+}
 
     public async del(key: string): Promise<void> {
         try {
@@ -402,17 +522,33 @@ export class RedisCacheService {
         }
     }
 
-    public async hasKey(key: string): Promise<boolean> {
-        try {
-            const exists = await this.redisClient.exists(key);
-            logger.log(this.serviceIdentifier, `Key exists check: ${key} - ${exists}`, 'check');
-            return exists === 1;
-        } catch (error) {
-            logger.log(this.serviceIdentifier, `Redis cache hasKey error: ${error}`, 'error');
-            return false;
-        }
+    // public async hasKey(key: string): Promise<boolean> {
+    //     try {
+            
+    //         const exists = await this.redisClient.exists(key);
+    //         logger.log(this.serviceIdentifier, `Key exists check: ${key} - ${exists}`, 'check');
+    //         return exists === 1;
+    //     } catch (error) {
+    //         logger.log(this.serviceIdentifier, `Redis cache hasKey error: ${error}`, 'error');
+    //         return false;
+    //     }
+    // }
+public async hasKey(key: string): Promise<boolean> {
+  try {
+    let exists: number;
+    if (this.testMode) {
+      const str = await this.redisClient.get(key);
+      exists = str !== null ? 1 : 0;
+    } else {
+      exists = await this.redisClient.exists(key);
     }
-
+    logger.log(this.serviceIdentifier, `Key exists check: ${key} - ${exists}`, 'check');
+    return exists === 1;
+  } catch (error) {
+    logger.log(this.serviceIdentifier, `Redis cache hasKey error: ${error}`, 'error');
+    return false;
+  }
+}
     public getConfig() {
         return {
             ttl: this.defaultTTL,

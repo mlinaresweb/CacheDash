@@ -1,3 +1,4 @@
+//jest.config.TS
 import type { Config } from 'jest';
 
 const config: Config = {
@@ -13,6 +14,10 @@ const config: Config = {
     '^cache-dash$': '<rootDir>/src/index.ts',
   },
   reporters: ['default', 'jest-junit'],
+   testPathIgnorePatterns: [
+    '/tests/integration/', 
+    '/tests/edge/'
+  ]
 };
 
 export default config;

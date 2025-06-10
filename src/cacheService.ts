@@ -22,17 +22,20 @@ export class CacheService {
     private defaultTTL?: number;
     private serviceIdentifier: string;
     private monitoringEnabled: boolean;
+    private testMode: boolean;
 
-    constructor(config: CacheServiceConfig = {}) {
+    constructor(config: CacheServiceConfig & { testMode?: boolean } = {}) {
         const {
             cacheType = CacheType.LOCAL,
             defaultTTL,
+            testMode = false,
             redisOptions,
             serviceIdentifier = "DefaultService",
             enableMonitoring = false,
             maxMemorySizeMB
         } = config;
 
+        this.testMode = testMode;
         this.cacheType = cacheType;
         this.defaultTTL = defaultTTL;
         this.serviceIdentifier = serviceIdentifier;
@@ -41,25 +44,28 @@ export class CacheService {
         const maxMemorySize = maxMemorySizeMB ? maxMemorySizeMB * 1024 * 1024 : undefined;
         
         if (cacheType === CacheType.LOCAL) {
-            this.localCacheService = new LocalCacheService(defaultTTL, serviceIdentifier, maxMemorySize); 
+              const ttl = defaultTTL ?? 0;
+            this.localCacheService = new LocalCacheService(ttl, serviceIdentifier, maxMemorySize, testMode); 
 
             // Register the cache service and its key stats with the global collector
             const globalCollector = GlobalCacheStatsCollector.getInstance();
             globalCollector.registerCacheService(serviceIdentifier, this.localCacheService.getStats(), this.localCacheService, maxMemorySizeMB);
             globalCollector.registerKeyStats(serviceIdentifier, this.localCacheService.getKeyStats());
 
-            if (this.monitoringEnabled) {
+            if (this.monitoringEnabled && !testMode) {
                 globalCollector.enableMonitoring();
             }
-        } else if (cacheType === CacheType.REDIS && redisOptions) {
-            this.redisCacheService = new RedisCacheService(redisOptions, defaultTTL, serviceIdentifier);
+        } else if (cacheType === CacheType.REDIS ) {
+            const opts = (redisOptions as RedisOptions) || {};
+            const ttl = defaultTTL ?? 0;
+            this.redisCacheService = new RedisCacheService(  opts, ttl, serviceIdentifier,maxMemorySize, testMode);
 
             // Register the cache service and its key stats with the global collector
             const globalCollector = GlobalCacheStatsCollector.getInstance();
             globalCollector.registerCacheService(serviceIdentifier, this.redisCacheService.getStats(), this.redisCacheService);
             globalCollector.registerKeyStats(serviceIdentifier, this.redisCacheService.getKeyStats());
 
-            if (this.monitoringEnabled) {
+            if (this.monitoringEnabled && !testMode) {
                 globalCollector.enableMonitoring();
             }
         }
