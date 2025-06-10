@@ -1,7 +1,8 @@
 // websocketServer.ts
 import { Server } from 'ws';
 
-const wss = new Server({ port: 8081 });
+// Exportamos wss para poder inyectarlo en los tests
+export const wss = new Server({ port: 8081 });
 
 wss.on('connection', (ws) => {
     console.log('Client connected');
@@ -12,7 +13,7 @@ wss.on('connection', (ws) => {
 });
 
 export function broadcast(data: any) {
-    wss.clients.forEach((client) => {
+    wss.clients.forEach((client: any) => {
         if (client.readyState === client.OPEN) {
             client.send(JSON.stringify(data));
         }

@@ -14,10 +14,6 @@ const config: Config = {
     '^cache-dash$': '<rootDir>/src/index.ts',
   },
   reporters: ['default', 'jest-junit'],
-   testPathIgnorePatterns: [
-    '/tests/integration/', 
-    '/tests/edge/'
-  ]
 };
 
 export default config;
