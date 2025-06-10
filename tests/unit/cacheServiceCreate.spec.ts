@@ -1,5 +1,4 @@
 import { CacheServiceCreate } from '../../src/cacheServiceCreate';
-import { CacheType } from '../../src/types/cache';
 import { CacheService } from '../../src/cacheService';
 
 describe('CacheServiceCreate', () => {
