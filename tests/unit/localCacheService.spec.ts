@@ -49,8 +49,6 @@ describe('LocalCacheService (unit) – comprehensive', () => {
     expect(xstat.size).toBeGreaterThan(0);
   });
 
-  // ———————————————— New Tests ————————————————
-
   it('getConfig returns correct TTL and maxMemorySize', () => {
     const cfg = cache.getConfig();
     expect(cfg.ttl).toBe(0);
