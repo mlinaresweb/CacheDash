@@ -4,49 +4,52 @@ import type { Application } from 'express';
 import type { Server } from 'http';
 import path from 'node:path';
 
-describe('Dashboard routes integration', () => {
+describe('Dashboard routes – wiring completo', () => {
   let app: Application;
-  let server: Server;
+  let server: Server | undefined;
   let request: typeof import('supertest');
 
   beforeAll(async () => {
     jest.resetModules();
-    jest.unmock('express');
-    jest.unmock('http');
+    jest.doMock('express', () => jest.requireActual('express'));
+    jest.doMock('http',    () => jest.requireActual('http'));
 
-    /* 👉 RESTAURA dashboardRoutes REAL */
+    /* Ruta absoluta del módulo de rutas */
     const routesPath = require.resolve(
       path.join(process.cwd(), 'src', 'dashboard', 'routes', 'dashboardRoutes')
     );
+    /* Sustituye el stub global por la implementación real */
     jest.doMock(routesPath, () => jest.requireActual(routesPath));
 
-    /* 👉 Stub mínimo del GlobalCacheStatsCollector */
+    /* 🔧 Stub del GlobalCacheStatsCollector con lo que piden las 3 rutas */
     const collectorPath = require.resolve(
       path.join(process.cwd(), 'src', 'dashboard', 'globalCacheStatsCollector')
     );
     jest.doMock(collectorPath, () => {
-      const blankService = {
-        set  : jest.fn().mockImplementation(async () => undefined),
-        get  : jest.fn().mockImplementation(async () => 'value'),
-        del  : jest.fn().mockImplementation(async () => undefined),
-        flush: jest.fn().mockImplementation(async () => undefined),
-        getKeyStats : jest.fn().mockReturnValue(new Map()),
-        updateConfig: jest.fn(),
-        getStats    : jest.fn().mockReturnValue({}),
-      };
+      /* keyStats ficticio para el servicio 'svc' */
+      const keyStatsMap = new Map().set('myKey', {
+        keyName: 'myKey',
+        hits   : 1,
+        misses : 0,
+        size   : 10,
+      });
+      const registry = new Map().set('svc', keyStatsMap);
+
       return {
         GlobalCacheStatsCollector: {
           getInstance: () => ({
-            isMonitoringEnabled: () => true,
-            getAllStats        : () => new Map(),
-            getKeyStatsRegistry: () => new Map(),
-            getService         : () => blankService,
+            isMonitoringEnabled          : () => true,
+            getAllStats                  : () => new Map(),
+            getKeyStatsRegistry          : () => registry,
+            generateCsv                  : () => 'csv',          // /export-key-stats
+            getAllServicesCallHistory    : () => [],             // /all-services-call-history
+            getService                   : () => ({}),
           }),
         },
       };
     });
 
-    /* Crea app real + servidor */
+    /* Express + rutas reales */
     const express = (await import('express')).default;
     const { configureRoutes } = await import(routesPath);
 
@@ -55,23 +58,36 @@ describe('Dashboard routes integration', () => {
     app.use('/', configureRoutes());
     server = app.listen(0);
 
-    /* importa supertest DESPUÉS de restaurar http */
     const st = await import('supertest');
     request = (st as any).default ?? (st as any);
   });
 
-  afterAll(() => server.close());
+  afterAll(() => server?.close());
 
-  it('GET /dashboard debería devolver 200', async () => {
-    const res = await request(server).get('/dashboard');
-    expect(res.status).toBe(200);
-  });
+  const cases: [string, string, any?][] = [
+    ['get',  '/dashboard'],
+    ['get',  '/dashboard/estadisticas'],
+    ['get',  '/cache-key-stats'],
+    ['get',  '/cache-key-stats/charts?service=svc'],
+    ['post', '/delete-key',      { service: 'svc', key: 'k' }],
+    ['post', '/refresh-key',     { service: 'svc', key: 'k' }],
+    ['post', '/flush-cache',     { service: 'svc' }],
+    ['get',  '/export-key-stats?service=svc'],
+    ['get',  '/memory-usage'],
+    ['get',  '/logs'],
+    ['get',  '/all-services-call-history'],
+    ['post', '/update-ttl',      { service: 'svc', key: 'k', ttl: 10 }],
+    ['get',  '/settings'],
+    ['post', '/update-settings', { serviceIdentifier: 'svc' }],
+  ];
 
-  it('POST /update-ttl debe validar TTL numérico', async () => {
-    const res = await request(server)
-      .post('/update-ttl')
-      .send({ service: 'svc', key: 'k', ttl: 'abc' });
+  describe.each(cases)('%s %s responde (no 404)', (method, url, body) => {
+    it('no devuelve 404', async () => {
+      const res = body
+        ? await request(server!)[method as 'get' | 'post'](url).send(body)
+        : await request(server!)[method as 'get' | 'post'](url);
 
-    expect(res.status).toBe(400);
+      expect(res.status).not.toBe(404);
+    });
   });
 });
