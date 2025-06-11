@@ -1,9 +1,10 @@
 // src/webSockets/broadcasts/broadcastUpdate.ts
 import { generateServiceListViewHtml } from '../../views/pages/ServiceListView';
-import { broadcast } from '../websocketServer';
+import { wss, broadcast } from '../websocketServer';
 import { GlobalCacheStatsCollector } from '../../globalCacheStatsCollector';
 
 export async function broadcastUpdate(): Promise<void> {
+      if (wss.clients.size === 0) return;
     const globalCacheStatsCollector = GlobalCacheStatsCollector.getInstance();
     const allStats = globalCacheStatsCollector.getAllStats();
     const html = generateServiceListViewHtml(allStats);

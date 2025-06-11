@@ -50,17 +50,17 @@ jest.mock(
 );
 
 /* 8. Stub todos los broadcastUpdates (no hacen nada) */
-jest.mock(
-  './src/dashboard/webSockets/broadcasts/broadcastUpdate',
-  () => ({
-    broadcastUpdate               : async () => {},
-    broadcastUpdateLogs           : async () => {},
-    broadcastUpdateDashboard      : async (_:string) => {},
-    broadcastUpdateGlobalDashboard: async (_:string) => {},
-    broadcastUpdateGlobalStats    : async () => {},
-    broadcastUpdateServiceStats   : async (_:string) => {},
-  })
-);
+// jest.mock(
+//   './src/dashboard/webSockets/broadcasts/broadcastUpdate',
+//   () => ({
+//     broadcastUpdate               : async () => {},
+//     broadcastUpdateLogs           : async () => {},
+//     broadcastUpdateDashboard      : async (_:string) => {},
+//     broadcastUpdateGlobalDashboard: async (_:string) => {},
+//     broadcastUpdateGlobalStats    : async () => {},
+//     broadcastUpdateServiceStats   : async (_:string) => {},
+//   })
+// );
 
 /* 9. Extiende ioredis-mock (config/psubscribe) */
 const RedisMock = require('ioredis-mock');
