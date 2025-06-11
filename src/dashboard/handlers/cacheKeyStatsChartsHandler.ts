@@ -1,3 +1,5 @@
+// src/handlers/cacheKeyStatsChartsHandler.ts
+
 import { Request, Response } from 'express';
 import { GlobalCacheStatsCollector } from '../globalCacheStatsCollector';
 import { generateStatisticsViewHtml } from '../views/pages/StatisticsView';
