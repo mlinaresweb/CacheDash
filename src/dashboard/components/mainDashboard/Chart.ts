@@ -2,7 +2,7 @@ export function generateChartHtml(): string {
     return `
         <div>
             <h2 style="color: white;">Cache Calls Over Time for All Services</h2>
-            <canvas id="allServicesCacheCallsChart"></canvas>
+            <canvas id="allServicesCacheCallsChart" data-testid="stats-chart"></canvas>
             <script>
                 document.addEventListener('DOMContentLoaded', async function () {
                     const response = await fetch('/all-services-call-history');

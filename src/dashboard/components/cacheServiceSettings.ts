@@ -23,10 +23,10 @@ export function generateCacheServiceSettingsHtml(service: LocalCacheService | Re
         </div>
         <div>
             <label for="ttl-${identifier}" style="display: block; margin-top: 10px; color: #cdcdcd;">New TTL:</label>
-            <input type="number" id="ttl-${identifier}" step="1" style="width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 10px; background-color: #2b2b2b; border: 1px solid #454545; color: #cdcdcd;" />
+            <input type="number" id="ttl-${identifier}" data-testid="refresh-rate" step="1" style="width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 10px; background-color: #2b2b2b; border: 1px solid #454545; color: #cdcdcd;" />
             <label for="maxMemorySize-${identifier}" style="display: block; margin-top: 10px; color: #cdcdcd;">New Max Memory Size (MB):</label>
             <input type="number" id="maxMemorySize-${identifier}" step="0.01" style="width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 10px; background-color: #2b2b2b; border: 1px solid #454545; color: #cdcdcd;" />
-            <button onclick="updateSettings('${identifier}')" style="
+            <button data-testid="submit-settings" onclick="updateSettings('${identifier}')" style="
                 padding: 8px 16px;
                 background-color: #ffc107;
                 border: none;

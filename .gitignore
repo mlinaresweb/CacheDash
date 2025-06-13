@@ -1,6 +1,9 @@
 node_modules/
 static/
 dist/
+playwright-report/
+screenshots/
+test-results/
 coverage/
 junit.xml
 # Local env files

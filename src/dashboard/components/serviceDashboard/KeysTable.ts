@@ -3,7 +3,7 @@ import { KeyStats } from '../../../types/cache';
 export function generateKeysTableHtml(service: string, keyStats: KeyStats[]): string {
     return `
     <div class="table-responsive">
-        <table class="table table-striped mt-4">
+        <table id="keys-table" class="table table-striped mt-4" data-testid="service-table">
             <thead>
                 <tr>
                     <th class="truncate">Key</th>
@@ -34,7 +34,7 @@ export function generateKeysTableHtml(service: string, keyStats: KeyStats[]): st
                         <td>${timeRemaining}</td>
                         <td>${stat.size}</td>
                         <td class="actions">
-                            <button class="btn btn-danger btn-sm" onclick="deleteKey('${service}', '${stat.keyName}')"><i class="fas fa-trash-alt"></i></button>
+                            <button class="btn btn-danger btn-sm" data-testid="delete-key" onclick="deleteKey('${service}', '${stat.keyName}')"><i class="fas fa-trash-alt"></i></button>
                             <button class="btn btn-primary btn-sm" onclick="refreshKey('${service}', '${stat.keyName}')"><i class="fas fa-sync-alt"></i></button>
                             <button class="btn btn-secondary btn-sm" onclick="showTtlModal('${service}', '${stat.keyName}', ${stat.ttl})"><i class="fas fa-cog"></i></button>
                         </td>

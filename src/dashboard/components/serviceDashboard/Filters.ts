@@ -4,7 +4,7 @@ export function generateFiltersHtml(service: string, searchKey?: string, sortBy:
     return `
     <form id="searchForm" class="form-inline float-right mb-4" action="/cache-key-stats" method="get">
         <input type="hidden" name="service" value="${service}">
-        <input id="searchKey" class="form-control mr-sm-2" type="search" name="searchKey" placeholder="Search by key" aria-label="Search" value="${searchKey || ''}">
+        <input id="searchKey"  data-testid="filter-input" class="form-control mr-sm-2" type="search" name="searchKey" placeholder="Search by key" aria-label="Search" value="${searchKey || ''}">
         <select id="sortBy" class="form-control mr-sm-2" name="sortBy">
             <option value="keyName" ${sortBy === 'keyName' ? 'selected' : ''}>Key</option>
             <option value="hits" ${sortBy === 'hits' ? 'selected' : ''}>Hits</option>
