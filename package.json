@@ -17,6 +17,7 @@
     "build": "tsc -p tsconfig.build.json",
     "dev": "ts-node --project tsconfig.json examples/addkey.ts",
     "test": "jest",
+    "test:edge": "jest --config jest.edge.config.ts",
     "prepare": "npm run build",
     "demo:local-es": "ts-node --project tsconfig.json examples/DEMOS/ES/demo_type_local_ES.ts",
     "demo:redis-es": "ts-node --project tsconfig.json examples/DEMOS/ES/demo_type_redis_ES.ts",
