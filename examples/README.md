@@ -1,6 +1,3 @@
-Pensó durante un par de segundos
-
-```markdown
 # 🗂️ CacheDash Examples — Master Index  
 *(English first · Español después)*
 
