@@ -1,6 +1,6 @@
 # 📚 Guía de Ejemplos – **CacheDash**
 
-Esta carpeta **`examples/`** contiene **10 archivos** que ilustran, de forma progresiva, **cómo usar toda la API pública** de CacheDash.  
+Esta carpeta **`examples/`** contiene **11 archivos** que ilustran, de forma progresiva, **cómo usar toda la API pública** de CacheDash.  
 Los ejemplos **no están pensados para ejecutarse** tal cual, sino como _píldoras de referencia_ que puedes copiar y adaptar dentro de tu código.
 
 | # | Archivo | Qué enseña | Métodos destacados |
@@ -12,22 +12,24 @@ Los ejemplos **no están pensados para ejecutarse** tal cual, sino como _píldor
 | 5 | `5-ttl-strategies.ts` | Estrategias de TTL e invalidación selectiva/global | `set`, `hasKey`, `del`, `flush`, `getStats` |
 | 6 | `6-multi-service-fallback.ts` | Fallback LOCAL → REDIS con warming | `get`, `set`, `hasKey`, `del`, `getStats` |
 | 7 | `7-memory-limit-eviction.ts` | Límite de memoria y evictions automáticos (LOCAL) | `set`, `hasKey`, `getStats`, `getKeyStats` |
-| 8 | `8-concurrency-safe.ts` | Concurrencia segura con mapa in-flight | `get`, `set`, `hasKey`, `getStats` |
+| 8 | `8-concurrency-safe.ts` | Concurrencia segura con mapa in‑flight | `get`, `set`, `hasKey`, `getStats` |
 | 9 | `9-bulk-refresh.ts` | Renovación masiva por prefijo (`user:*`) | `getKeyStats`, `set`, `del`, `getStats` |
 | 10| `10-testmode-example.ts` | Uso de `testMode: true` en suites unitarias | todos los métodos (sin broadcast) |
+| 11| `11-advanced-orchestration.ts` | **Orquestación multi‑nivel (L1/L2/L3) + SWR + métricas agregadas** | `create`, `get`, `set`, `hasKey`, `getStats`, `flush` |
 
 ---
 
 ## 🛠 Cómo leer estos ejemplos
 
-1. **Ubica el escenario** que se parezca a tu necesidad (TTL, Redis, evictions, etc.).
-2. **Copia el bloque relevante** dentro de tu proyecto:
-   - Cambia `cacheType` (`local` / `redis`) y `serviceIdentifier`.
-   - Ajusta los TTL y claves según tu dominio.
-   - Puedes activar el monitoreo es decir el dashboard y poder ver en tiempo y manejar tu cache desde la web.
-3. **Integra** el patrón (`getOrSet`, `cachedFn`, fallback, etc.) en tu servicio, _resolver_, hook o controlador.
+1. **Ubica el escenario** que se parezca a tu necesidad (TTL, Redis, evictions, etc.).  
+2. **Copia el bloque relevante** dentro de tu proyecto:  
+   - Cambia `cacheType` (`local` / `redis`) y `serviceIdentifier`.  
+   - Ajusta los TTL y claves según tu dominio.  
+   - Activa el dashboard (`enableMonitoring: true`) si necesitas visibilidad web.  
+3. **Integra** el patrón (por ejemplo `getOrSet`, `cachedFn`, fallback, SWR) en tu servicio, _resolver_, hook o controlador.
 
 > ℹ️ Los ejemplos evitan dependencias externas: **no traen fetch/axios** ni bases de datos; todo el código gira en torno a la **API de CacheDash**.
+
 
 ---
 
@@ -98,17 +100,45 @@ Cómo instanciar CacheDash con `testMode: true` para suites de Jest.
 Desactiva WebSockets, timers y monitorización para que los tests sean rápidos y estables.
 </details>
 
+<details>
+<summary><strong>11. 11-advanced-orchestration.ts</strong></summary>
+
+**Orquestación tridimensional**:
+
+| Capa | Backend | TTL | Propósito |
+|------|---------|-----|-----------|
+| L1   | `localFast`   | 3 s   | latencia mínima, golpe de calor inicial |
+| L2   | `localLarge`  | 30 s  | memoria con límite 64 MB, retención media |
+| L3   | `redisShared` | 300 s | durabilidad entre pods |
+
+Incluye:
+
+- Fallback cascada L1 → L3.  
+- **write‑through** en los tres niveles.  
+- Patrón **stale‑while‑revalidate** con refresco en segundo plano.  
+- Mapa *in‑flight* global para evitar dog‑pile.  
+- Agregación de métricas (`mergedStats`) para observabilidad unificada.
+</details>
+
 ---
 
 ## ✅ Conclusión
 
-Con estos 10 archivos, cualquier desarrollador puede:
+Con estos 11 archivos, cualquier desarrollador puede:
 
-- **Adoptar CacheDash** en memoria o con Redis.
-- Diseñar **TTL inteligentes** y políticas de invalidación.
-- Implementar **fallback multicapas** para latencia y durabilidad.
-- Controlar el **uso de memoria** y evictions.
-- Asegurar **concurrencia** sin sobrecarga.
-- Integrar la caché en **tests automatizados**.
+- Adoptar CacheDash en memoria o Redis, simple o multinivel.  
+- Diseñar TTL inteligentes y políticas de invalidez.  
+- Implementar fallback multicapas y SWR para latencia + frescura.  
+- Controlar memoria y evictions.  
+- Asegurar concurrencia sin sobrecarga.  
+- Integrar la caché en tests automatizados y observar métricas globales.
 
-Copia el patrón que necesites, ajusta los TTL y disfruta de una caché flexible y bien instrumentada.
+Copia el patrón que necesites, ajusta TTLs y disfruta de una caché flexible y bien instrumentada.
+
+
+
+
+
+
+
+

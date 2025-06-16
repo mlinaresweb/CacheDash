@@ -1,24 +1,26 @@
-/**
- * 🧩 Ejemplo 8: Patron Concurrency‑Safe (Double‑Check + In‑Flight Map)
- * ===================================================================
- * Problema real:
- *   ▸ Varias peticiones simultáneas piden el mismo recurso costoso.
- *   ▸ Si la clave no existe aún en caché, cada petición dispara
- *     la operación cara ⇒ “dog‑pile effect”.
+/****************************************************************************************
+ * 📚 Ejemplo 8 (ES) – Patrón Concurrency‑Safe (Double‑Check + In‑Flight Map)
+ * ======================================================================================
+ * Snippet de referencia — no pensado para ejecutarse “tal cual”.  Explica cómo
+ * proteger un recurso costoso ante peticiones concurrentes usando sólo la API
+ * pública de CacheDash.
  *
- * Solución:
- *   ▸ 1)  Comprobamos la caché (primer check).
- *   ▸ 2)  Si no hay dato, almacenamos una promesa en un mapa “in‑flight”
- *         para que el resto de peticiones esperen a ese mismo resultado.
- *   ▸ 3)  Cuando la promesa se resuelve, se guarda en CacheDash y
- *         se elimina del mapa.
+ * ✨ Problema
+ *   • Cinco peticiones simultáneas solicitan la misma información pesada.
+ *   • Si la clave no está en caché, cada una dispararía el cálculo ⇒ “dog‑pile”.
  *
- * API empleada:  get() · set() · hasKey() · getStats()
- */
+ * 🛠 Solución
+ *   1)  Mirar la caché (primer check).
+ *   2)  Si no está, guardar la Promise en un **in‑flight map**.
+ *   3)  Las peticiones siguientes esperan la misma Promise.
+ *   4)  Al resolverse, guardamos el valor en CacheDash y eliminamos el in‑flight.
+ *
+ *   API usada:  get() · set() · hasKey() · getStats()
+ ****************************************************************************************/
 
-import { CacheServiceCreate } from '../src';
+import { CacheServiceCreate } from '../../src';
 
-// Caché LOCAL con TTL de 15 s
+/* Instancia LOCAL con TTL global 15 s */
 const cache = CacheServiceCreate.create({
   cacheType        : 'local',
   defaultTTL       : 15,
@@ -26,63 +28,50 @@ const cache = CacheServiceCreate.create({
   enableMonitoring : false
 });
 
-// ▸ Mapa para promesas en curso (clave → Promise)
+/* Mapa in‑flight  (clave → Promise) */
 const inFlight = new Map<string, Promise<any>>();
 
-/* ----------------------------------------------------------------- *
- * 1. Helper concurrency‑safe
- * ----------------------------------------------------------------- */
+/* Helper concurrency‑safe */
 async function getOrLoad<T>(
   key: string,
   loader: () => Promise<T> | T,
   ttl = 15
 ): Promise<T> {
-  /* Primer check (caché) */
+  /* 1º check: caché */
   const cached = await cache.get<T>(key);
   if (cached !== undefined) return cached;
 
-  /* Segundo check (promesa en curso) */
-  if (inFlight.has(key)) {
-    return inFlight.get(key)!; // Espera la misma promesa
-  }
+  /* 2º check: promesa en curso */
+  if (inFlight.has(key)) return inFlight.get(key)!;
 
-  /* No hay nada: lanzamos loader(), guardamos promesa y continuamos */
+  /* Lanzamos loader y lo registramos como in‑flight */
   const promise = Promise.resolve(loader())
-    .then(async value => {
-      await cache.set(key, value, ttl); // Escribir en CacheDash
-      return value;
+    .then(async result => {
+      await cache.set(key, result, ttl); // Persistir en CacheDash
+      return result;
     })
-    .finally(() => {
-      inFlight.delete(key);             // Limpiar mapa
-    });
+    .finally(() => inFlight.delete(key));
 
   inFlight.set(key, promise);
   return promise;
 }
 
-/* ----------------------------------------------------------------- *
- * 2. Demonstación con carga “costosa” y peticiones concurrentes
- * ----------------------------------------------------------------- */
-async function expensiveOp(id: number): Promise<string> {
-  console.log(`⏳  Generando recurso costoso para id=${id}…`);
-  await new Promise(r => setTimeout(r, 300)); // Simula latencia
-  return `VALUE_${id}_${Date.now()}`;
-}
-
-async function demoConcurrency() {
+/* Ejemplo de uso (5 peticiones concurrentes) — IIFE async para ilustrar */
+(async () => {
   const KEY = 'heavy:99';
 
-  // Lanzamos 5 peticiones concurrentes
-  console.log('\n🚀  Lanzando 5 peticiones concurrentes al mismo recurso…');
-  const promises = Array.from({ length: 5 }, () =>
+  const expensiveOp = async (id: number) => {
+    // … lógica costosa: DB, IA, PDF …
+    await new Promise(r => setTimeout(r, 300));
+    return `VALUE_${id}_${Date.now()}`;
+  };
+
+  const concurrent = Array.from({ length: 5 }, () =>
     getOrLoad(KEY, () => expensiveOp(99))
   );
 
-  const results = await Promise.all(promises);
-  console.log('Resultados:', results);
+  const results = await Promise.all(concurrent);
+  // -> los 5 resultados son idénticos; expensiveOp() sólo se ejecutó 1 vez
 
-  // Todas deberían ser idénticas y haber ejecutado expensiveOp solo una vez
-  console.log('\n🏁  Stats finales:', cache.getStats());
-}
-
-demoConcurrency().catch(console.error);
+  const stats = cache.getStats(); // hits debería ser 4, misses 1
+})();

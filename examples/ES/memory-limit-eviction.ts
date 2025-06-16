@@ -1,67 +1,43 @@
-/**
- * 🧩 Ejemplo 7: Límite de memoria y expulsión automática (LOCAL)
- * ==============================================================
- * Objetivo:
- *   • Configurar `maxMemorySizeMB` para la instancia LOCAL.
- *   • Observar cómo CacheDash va expulsando (evicting) claves
- *     menos usadas cuando se supera el umbral.
- *   • Ver estadísticas de cuántas claves y bytes se han desalojado.
+/****************************************************************************************
+ * 📚 Ejemplo 7 (ES) – Límite de memoria y expulsión automática (LOCAL)
+ * =====================================================================================
+ * Snippet de referencia — NO pensado para ejecutarse “tal cual”.
  *
- * Nota:  Este ejemplo funciona en memoria únicamente.  Redis gestiona
- *        sus límites con políticas internas.  Aquí mostramos la
- *        característica exclusiva del backend LOCAL de CacheDash.
- */
+ * Qué ilustra:
+ *   • Cómo fijar `maxMemorySizeMB` en una instancia LOCAL.
+ *   • Cómo CacheDash va expulsando (evicting) claves menos usadas
+ *     al superar ese umbral.
+ *   • Cómo consultar en `getStats()` el número de evictions,
+ *     el tamaño actual y las claves restantes.
+ *
+ * Redis tiene sus propias políticas de memoria; esta característica
+ * es exclusiva del backend LOCAL.
+ ****************************************************************************************/
 
-import { CacheServiceCreate } from '../src';
+import { CacheServiceCreate } from '../../src';
 
-// Definimos un límite deliberadamente bajo (2 MB)
+/* 1️⃣  Instancia LOCAL con límite de 2 MB y sin TTL */
 const MAX_MB = 2;
 
 const cache = CacheServiceCreate.create({
   cacheType        : 'local',
-  defaultTTL       : 0,                // sin expiración por TTL
-  maxMemorySizeMB  : MAX_MB,
+  defaultTTL       : 0,         // sin expiración por tiempo
+  maxMemorySizeMB  : MAX_MB,    // umbral de memoria
   serviceIdentifier: 'EXAMPLE_EVICT_7',
   enableMonitoring : false
 });
 
-// Helper para crear un objeto ~0.5 MB
-function generateBigObject(i: number) {
-  return { id: i, blob: 'x'.repeat(512 * 1024) }; // 512 KB aprox.
-}
+/* Helper: objeto ~0.5 MB */
+const genBig = (i: number) => ({ id: i, blob: 'x'.repeat(512 * 1024) });
 
-async function main() {
-  console.log(`🚦  Límite de memoria LOCAL: ${MAX_MB} MB\n`);
-
-  // 1. Insertamos 6 objetos de 0.5 MB cada uno (≈ 3 MB totales)
+/* 2️⃣  Inserta datos hasta superar el límite (IIFE async) */
+(async () => {
   for (let i = 1; i <= 6; i++) {
-    await cache.set(`big:${i}`, generateBigObject(i));
-    console.log(`✅ set('big:${i}') — tamaño aproximado ${(i * 0.5).toFixed(1)} MB`);
+    await cache.set(`big:${i}`, genBig(i)); // ~0.5 MB cada uno
   }
 
-  console.log('\n📊 Stats globales después de insertar 6 objetos:');
-  console.log(cache.getStats());
+  const statsAfterInsert = cache.getStats();     // observar size y evictions
+  const survivors = Array.from(cache.getKeyStats()?.keys() || []);
 
-  // 2. Revisamos qué claves sobreviven
-  const survivors: string[] = [];
-  const keyStats = cache.getKeyStats();
-  if (keyStats) {
-    for (const key of keyStats.keys()) {
-      survivors.push(key);
-    }
-  }
-
-  console.log('\n🔍  Claves existentes tras la expulsión automática:');
-  console.log(survivors.length ? survivors.join(', ') : '(ninguna)');
-
-  // 3. Demostramos que los objetos expulsados ya no están accesibles
-  for (let i = 1; i <= 6; i++) {
-    const exists = await cache.hasKey(`big:${i}`);
-    console.log(`¿Existe big:${i}? →`, exists);
-  }
-
-  console.log('\n📉  Stats finales (evictions, size, keys):');
-  console.log(cache.getStats());
-}
-
-main().catch(console.error);
+  // survivors muestra qué claves sobrevivieron tras la expulsión automática
+})();

@@ -1,74 +1,64 @@
-/**
- * 🧩 Ejemplo 2: Uso básico y progresivo de CacheDash con Redis
- * -------------------------------------------------------------------------
- * Este archivo enseña cómo integrar CacheDash con un servidor Redis,
- * usando variables de entorno para que el código funcione igual en
- * desarrollo local, contenedores, staging o producción.
+/****************************************************************************************
+ * 📚 Ejemplo 2 (ES) – Integrar CacheDash con Redis
+ * ======================================================================================
+ * Este archivo **NO está pensado para ejecutarse**.  Es un _snippet_ de referencia que
+ * muestra cómo usar CacheDash con un backend Redis en cualquier entorno (local, CI, prod)
+ * sin hard‑codear la URL.
  *
- * Variables de entorno admitidas (prioridad):
- *  1. REDIS_URL  → URL completa (p. ej. redis://user:pass@my‑host:6379/0)
- *  2. REDIS_HOST → Host (por defecto "127.0.0.1")
- *     REDIS_PORT → Puerto (por defecto "6379")
+ * 1) Construimos `redisUrl` a partir de variables de entorno:
+ *      • REDIS_URL   (url completa → redis://user:pass@host:port/db)
+ *      • REDIS_HOST  +  REDIS_PORT  (alternativa)
+ * 2) Creamos la instancia `cache` con `cacheType:'redis'`.
+ * 3) Demostramos todas las operaciones clave: set, get, hasKey, del, flush, getStats.
  *
- * Incluye:
- *   ✅ set() / get() con TTL por defecto y personalizado
- *   ✅ hasKey(), del(), flush()
- *   ✅ getStats() y getKeyStats()
- */
+ * Copia las secciones que necesites en tus servicios/controladores y adapta
+ *TTL, claves y serviceIdentifier a tu dominio.
+ ****************************************************************************************/
 
-import { CacheServiceCreate } from '../src';
+import { CacheServiceCreate } from '../../src';
 
-// Construir la URL de conexión a Redis de forma flexible
+/* 1️⃣  Construir la URL de conexión a Redis */
 const redisUrl =
-  process.env.REDIS_URL ||                               // 1º: URL completa
-  `redis://${process.env.REDIS_HOST || '127.0.0.1'}:` +  // 2º: host + port
-  `${process.env.REDIS_PORT || 6379}`;
+  process.env.REDIS_URL ||                                // (1) URL completa
+  `redis://${process.env.REDIS_HOST || '127.0.0.1'}:` +   // (2) host
+  `${process.env.REDIS_PORT || 6379}`;                    //     + port
 
-// Crear instancia CacheDash con Redis
+/* 2️⃣  Instancia CacheDash con backend Redis */
 const cache = CacheServiceCreate.create({
   cacheType        : 'redis',
   redisOptions     : redisUrl,
-  defaultTTL       : 20,              // TTL por defecto de 20 s
+  defaultTTL       : 20,           // TTL global: 20 s
   serviceIdentifier: 'EXAMPLE_REDIS_2',
-  enableMonitoring : true
+  enableMonitoring : false         // cámbialo a true si usas el dashboard
 });
 
-async function main(): Promise<void> {
-  // 📝 Guardar valores con TTL implícito y explícito
-  await cache.set('redis:foo', 'bar');
-  await cache.set('redis:number', 100);
-  await cache.set('redis:ephemeral', 'temp', 5);   // TTL corto
+/* 3️⃣  Operaciones ilustrativas  (envueltas en IIFE async) */
+(async () => {
 
-  // 📥 Leer los valores
-  console.log('[get] redis:foo:',     await cache.get('redis:foo'));
-  console.log('[get] redis:number:',  await cache.get('redis:number'));
+  // Almacenar valores con TTL global y personalizado
+  await cache.set('redis:foo', 'bar');           // TTL 20 s
+  await cache.set('redis:number', 100);          // TTL 20 s
+  await cache.set('redis:ephemeral', 'temp', 5); // TTL 5 s
 
-  // ⏱ Comprobar expiración de TTL corto
-  console.log('[get] redis:ephemeral (antes):', await cache.get('redis:ephemeral'));
-  await new Promise(r => setTimeout(r, 6000));
-  console.log('[get] redis:ephemeral (después):', await cache.get('redis:ephemeral'));
+  // Leer valores
+  const foo = await cache.get('redis:foo');          // 'bar'
+  const num = await cache.get('redis:number');       // 100
 
-  // 🔍 Verificar existencia con hasKey()
-  console.log('[hasKey] redis:number?',    await cache.hasKey('redis:number'));
-  console.log('[hasKey] redis:ephemeral?', await cache.hasKey('redis:ephemeral'));
+  // Comprobar expiración del TTL corto
+  const before = await cache.get('redis:ephemeral'); // 'temp'
+  // … espera 6 s y vuelve a leer …
+  const after  = undefined; // (expiró, simplemente muestra la idea)
 
-  // 🧹 Borrar una clave y verificar
+  // Verificar existencia sin leer
+  const existsNum  = await cache.hasKey('redis:number');    // true
+  const existsTemp = await cache.hasKey('redis:ephemeral'); // false tras TTL
+
+  // Invalidar una clave y vaciar toda la caché
   await cache.del('redis:number');
-  console.log('[get] redis:number (tras del):', await cache.get('redis:number'));
-
-  // 🧼 flush(): eliminar toda la caché del servicio
   await cache.flush();
-  console.log('[get] redis:foo (tras flush):', await cache.get('redis:foo'));
 
-  // 📊 Ver estadísticas globales y por clave
-  console.log('\n[Stats Globales]:', cache.getStats());
-  const keyStats = cache.getKeyStats();
-  if (keyStats) {
-    console.log('\n[Stats por clave]:');
-    for (const [key, stats] of keyStats.entries()) {
-      console.log(` - ${key}:`, stats);
-    }
-  }
-}
+  // Stats globales + detalladas
+  const global = cache.getStats();
+  const perKey = cache.getKeyStats();
 
-main().catch(console.error);
+})();

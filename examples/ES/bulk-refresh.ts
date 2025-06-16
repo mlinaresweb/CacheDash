@@ -1,23 +1,19 @@
-/**
- * 🧩 Ejemplo 9: Renovación masiva (bulk refresh) por prefijo
- * =========================================================
- * Escenario:
- *   ▸ Tenemos cientos/miles de claves `user:*` almacenadas.
- *   ▸ Llega una migración (o cambio de roles) y necesitamos:
- *       1.  Actualizar/consolidar la estructura de datos.
- *       2.  Prolongar su TTL sin tocar el resto de claves.
- *       3.  O, si no se pueden migrar, invalidarlas en lote.
+/****************************************************************************************
+ * 📚 Ejemplo 9 (ES) – Renovación masiva por prefijo  user:*
+ * ======================================================================================
+ * Este snippet **no se ejecuta tal cual**.  Sirve de guía para:
  *
- * Demostramos:
- *   • Uso de getKeyStats() para localizar todas las claves user:*
- *   • Aplicar set() para “refrescar” TTL y estructura
- *   • Aplicar del() para las que no cumplan un criterio
- *   • Ver impacto en getStats() al final
- */
+ *   • Iterar todas las claves `user:*` mediante  getKeyStats().
+ *   • “Migrar” su estructura y prolongar TTL (set con nuevo objeto + 900 s).
+ *   • Borrar en lote (del) las que no puedan migrarse.
+ *   • Ver el impacto antes/después con  getStats().
+ *
+ * Copia sólo el bloque que necesites en tu servicio o script de mantenimiento.
+ ****************************************************************************************/
 
-import { CacheServiceCreate } from '../src';
+import { CacheServiceCreate } from '../../src';
 
-// Caché LOCAL con TTL por defecto 15 m
+/* 1️⃣  Instancia LOCAL con TTL por defecto = 15 min */
 const cache = CacheServiceCreate.create({
   cacheType        : 'local',
   defaultTTL       : 900,
@@ -25,58 +21,41 @@ const cache = CacheServiceCreate.create({
   enableMonitoring : false
 });
 
-/* ----------------------------------------------------------------- *
- * 1. Poblar la caché con datos “user:*” y otros prefijos
- * ----------------------------------------------------------------- */
-async function seed() {
+/* 2️⃣  Poblado inicial (opcional) */
+(async () => {
   await cache.set('user:1', { id: 1, role: 'guest' }, 300);
   await cache.set('user:2', { id: 2, role: 'member' }, 300);
   await cache.set('user:3', { id: 3, role: 'guest' }, 300);
 
-  // Claves no relacionadas (deben quedar intactas)
-  await cache.set('cfg:site', { ver: '1.0' }, 3600);
-  await cache.set('session:xyz', { token: 'abc' }, 600);
-}
+  await cache.set('cfg:site',    { ver: '1.0' }, 3600);
+  await cache.set('session:xyz', { token:'abc' }, 600);
+})();
 
-/* ----------------------------------------------------------------- *
- * 2. Proceso de renovación masiva
- * ----------------------------------------------------------------- */
+/* 3️⃣  Renovación masiva */
 async function bulkRefreshUsers() {
-  const keyStats = cache.getKeyStats();
-  if (!keyStats) return;
+  const statsMap = cache.getKeyStats();
+  if (!statsMap) return;
 
-  for (const [key, stats] of keyStats.entries()) {
-    if (!key.startsWith('user:')) continue;            // Filtramos
+  for (const [key] of statsMap.entries()) {
+    if (!key.startsWith('user:')) continue;
 
-    // A) Migramos estructura (añadimos campo updated)
-    const current = await cache.get<any>(key);
+    const current = await cache.get<Record<string, any>>(key);
     if (current) {
       const migrated = { ...current, updated: Date.now() };
-      await cache.set(key, migrated, 900);             // Nuevo TTL 15 m
-      console.log(`🆙  Refrescado ${key}`);
+      await cache.set(key, migrated, 900);          // TTL 15 min
     } else {
-      // B) Si no se pudo leer el valor, invalidamos la clave
-      await cache.del(key);
-      console.log(`🗑  Borrado ${key} (valor inaccesible)`);
+      await cache.del(key);                         // valor ilegible → borrar
     }
   }
 }
 
-/* ----------------------------------------------------------------- *
- * DEMO
- * ----------------------------------------------------------------- */
-async function main() {
-  await seed();
-
-  console.log('\n📊  Stats antes de la renovación:', cache.getStats());
+/* 4️⃣  Uso típico en un script de mantenimiento */
+(async () => {
+  console.log('Stats antes:', cache.getStats());
 
   await bulkRefreshUsers();
 
-  console.log('\n📊  Stats después de la renovación:', cache.getStats());
-
-  console.log('\n🔍  Verificamos que cfg:site y session:xyz sigan intactas:');
-  console.log('cfg:site →', await cache.get('cfg:site'));
-  console.log('session:xyz →', await cache.get('session:xyz'));
-}
-
-main().catch(console.error);
+  console.log('Stats después:', cache.getStats());
+  console.log('cfg:site intacta?',    await cache.hasKey('cfg:site'));
+  console.log('session:xyz intacta?', await cache.hasKey('session:xyz'));
+})();

@@ -1,27 +1,27 @@
 /****************************************************************************************
- * 🧩 Ejemplo 4 (ES) – Patrones para cachear resultados de funciones
- * =====================================================================================
- * Snippet pedagógico (NO se ejecuta tal cual).  Muestra tres formas profesionales
- * de aplicar CacheDash en tu código de negocio sin dependencias externas:
+ * 🧩 Example 4 (EN) – Patterns for caching function results
+ * ======================================================================================
+ * Documentation snippet (NOT meant to run as‑is).  Demonstrates three production‑ready
+ * ways to leverage CacheDash in business logic without extra dependencies:
  *
- *   1.  getOrSet()      → helper genérico con clave fija
- *   2.  cachedFn()      → “decorador” que genera la clave con los argumentos
- *   3.  Patrón inline   → clave compuesta dentro de la propia función costosa
+ *   1.  getOrSet()      → generic helper (fixed key)
+ *   2.  cachedFn()      → lightweight decorator (key = name + args)
+ *   3.  Inline pattern  → key built inside the heavy function itself
  *
- * Métodos usados:  get() · set() · del() · hasKey() · getStats()
+ * API methods:  get() · set() · del() · hasKey() · getStats()
  ****************************************************************************************/
 
 import { CacheServiceCreate } from '../../src';
 
-/* 0️⃣  Instancia LOCAL (usa 'redis' si lo prefieres) */
+/* 0️⃣  LOCAL instance (switch to 'redis' if needed) */
 const cache = CacheServiceCreate.create({
   cacheType        : 'local',
-  defaultTTL       : 30,              // TTL global (s)
+  defaultTTL       : 30,              // global TTL in seconds
   serviceIdentifier: 'EXAMPLE_FUNC_4',
   enableMonitoring : false
 });
 
-/* 1️⃣  getOrSet() – helper universal  (clave ya conocida) */
+/* 1️⃣  getOrSet() – universal helper (key already known) */
 async function getOrSet<T>(
   key: string,
   ttl: number,
@@ -34,7 +34,7 @@ async function getOrSet<T>(
   return value;
 }
 
-/* 2️⃣  cachedFn() – decorador para funciones (clave = nombre+args) */
+/* 2️⃣  cachedFn() – decorator for functions (key = name+args) */
 function cachedFn<T extends (...args: any[]) => any>(
   fn: T,
   ttl = 30,
@@ -51,40 +51,40 @@ function cachedFn<T extends (...args: any[]) => any>(
   };
 }
 
-/* 3️⃣  Patrón inline – la función maneja su propia clave */
+/* 3️⃣  Inline pattern – function handles its own key */
 async function expensiveComputation(a: number, b: number): Promise<number> {
   const key = `expensive:${a}:${b}`;
   const hit = await cache.get<number>(key);
   if (hit !== undefined) return hit;
 
-  const result = Math.pow(a, b);       // cálculo intensivo real
+  const result = Math.pow(a, b);       // heavy calculation
   await cache.set(key, result, 45);    // TTL 45 s
   return result;
 }
 
 /* ╭──────────────────────────────────────────────────────────╮
- * │  DEMO (IIFE async) – copia sólo las partes que necesites │
+ * │  DEMO (async IIFE) – copy only what you need            │
  * ╰──────────────────────────────────────────────────────────╯ */
 (async () => {
-  /* getOrSet(): cachear un objeto de configuración */
+  /* getOrSet(): cache a global config object */
   const cfg = await getOrSet('config:global', 120, () => ({
     version: '1.0', loadedAt: Date.now()
   }));
 
-  /* cachedFn(): cachear informes mensuales */
+  /* cachedFn(): cache monthly reports */
   const buildReport   = (y: number, m: number) => `REPORT_${y}_${m}_${Date.now()}`;
   const cachedReport  = cachedFn(buildReport, 60, 'report');
-  const feb2025First  = await cachedReport(2025, 2); // MISS, se genera
+  const feb2025First  = await cachedReport(2025, 2); // MISS
   const feb2025Second = await cachedReport(2025, 2); // HIT
 
-  /* inline: cálculo costoso */
+  /* inline: heavy calculation */
   const pow1 = await expensiveComputation(2, 10); // MISS
   const pow2 = await expensiveComputation(2, 10); // HIT
 
-  /* Invalidación puntual + verificación */
+  /* Point invalidation + check */
   await cache.del('report:[2025,2]');
   const stillExists = await cache.hasKey('report:[2025,2]'); // false
 
-  /* Stats para depuración */
-  console.log('Stats globales:', cache.getStats());
+  /* Debug stats */
+  console.log('Global stats:', cache.getStats());
 })();

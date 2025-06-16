@@ -1,25 +1,25 @@
 /****************************************************************************************
- * 📚 Ejemplo 6 (ES) – Fallback inteligente LOCAL → REDIS
+ * 📚 Example 6 (EN) – Smart Fallback LOCAL → REDIS
  * ======================================================================================
- * Fragmento de guía (no ejecutable tal cual).  Enseña a combinar dos instancias:
+ * Reference snippet (not runnable as‑is).  Shows how to combine two instances:
  *
- *   • `localCache`   → latencia ultra‑baja en memoria, TTL corto.
- *   • `redisCache`   → durabilidad entre pods, TTL más largo.
+ *   • `localCache`   → ultra‑low latency in‑memory cache, short TTL.
+ *   • `redisCache`   → durable shared cache, longer TTL.
  *
- * Patrón:
- *   1)  Leer siempre de la caché LOCAL.             (HIT ➜ devolver)
- *   2)  Si falla, consultar Redis.                  (HIT ➜ “calentar” LOCAL)
- *   3)  Si tampoco existe, cargar del origen real,  escribir en ambas (write‑through).
+ * Pattern:
+ *   1)  Always read from LOCAL.          (HIT → return)
+ *   2)  If miss, query Redis.            (HIT → warm LOCAL)
+ *   3)  If miss again, load from origin, write to both caches (write‑through).
  *
- * Métodos usados:  get() · set() · hasKey() · del() · getStats()
+ * API methods:  get() · set() · hasKey() · del() · getStats()
  ****************************************************************************************/
 
 import { CacheServiceCreate } from '../../src';
 
-/* 1️⃣  Instancias */
+/* 1️⃣  Instances */
 const localCache = CacheServiceCreate.create({
   cacheType        : 'local',
-  defaultTTL       : 5,   // TTL corto
+  defaultTTL       : 5,
   serviceIdentifier: 'LOCAL_FAST',
   enableMonitoring : false
 });
@@ -31,7 +31,7 @@ const redisUrl =
 const redisCache = CacheServiceCreate.create({
   cacheType        : 'redis',
   redisOptions     : redisUrl,
-  defaultTTL       : 30,  // TTL largo
+  defaultTTL       : 30,
   serviceIdentifier: 'REDIS_BACKING',
   enableMonitoring : false
 });
@@ -48,17 +48,17 @@ async function getWithFallback<T>(
 
   const hitRedis = await redisCache.get<T>(key);
   if (hitRedis !== undefined) {
-    await localCache.set(key, hitRedis, ttlLocal); // warming
+    await localCache.set(key, hitRedis, ttlLocal); // warm LOCAL
     return hitRedis;
   }
 
-  const fresh = await Promise.resolve(loader());   // origen real
+  const fresh = await Promise.resolve(loader());   // real origin
   await localCache.set(key, fresh, ttlLocal);
   await redisCache.set(key, fresh, ttlRedis);
   return fresh;
 }
 
-/* 3️⃣  Ejemplo de uso (copiar dentro de tu servicio) */
+/* 3️⃣  Usage example (embed in your service) */
 (async () => {
   const KEY = 'user:42';
 
@@ -66,7 +66,7 @@ async function getWithFallback<T>(
     ({ id: 42, name: 'User 42', loadedAt: Date.now() });
 
   const user = await getWithFallback(KEY, loadUserFromDB, 5, 30);
-  // • Primer acceso → MISS / MISS → se consulta DB y se llenan ambas caches
-  // • Acceso subsecuente (<5 s) → HIT local
-  // • Tras 5 s pero <30 s       → MISS local, HIT redis, se recalienta local
+  // • First access → MISS/MISS → DB call, populate both caches
+  // • Subsequent (<5 s)        → HIT local
+  // • After 5 s but <30 s      → MISS local, HIT Redis, re‑warm local
 })();

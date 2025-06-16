@@ -1,87 +1,64 @@
-/**
- * 🧩 Ejemplo 3: Cachear objetos JSON de una API con CacheDash (LOCAL)
- * ------------------------------------------------------------------
- * Paso a paso:
- *   1. Crear instancia LOCAL con TTL amplio (p. ej. 60 s)
- *   2. set() de un JSON (simula respuesta de API)
- *   3. get() para consumir el JSON desde caché
- *   4. hasKey() para saber si hay que volver a pedir la API
- *   5. del() para invalidar la respuesta cuando cambie la versión
- *   6. Inspeccionar estadísticas de tamaño y accesos
+/****************************************************************************************
+ * 📚 Ejemplo 3 (ES) – Cachear un JSON de API con CacheDash (LOCAL)
+ * =====================================================================================
+ * Snippet de referencia (NO ejecutable tal cual).  Demuestra cómo:
  *
- * NOTA:  En un proyecto real el JSON vendría de `fetch()` / `axios.get()`.
- *         Aquí lo asignamos directamente para centrarnos en el uso de la API.
- */
+ *   1.  Crear una instancia LOCAL con TTL amplio (60 s).
+ *   2.  Guardar un objeto JSON como respuesta de API (`set`).
+ *   3.  Leer ese JSON desde la caché (`get`).
+ *   4.  Evitar una nueva llamada si aún existe (`hasKey`).
+ *   5.  Invalidar la caché cuando la API publique nueva versión (`del` + nuevo `set`).
+ *   6.  Consultar estadísticas globales y por clave (`getStats`, `getKeyStats`).
+ *
+ * Sustituye el bloque “productsJson” por tu `fetch/axios` real
+ * y adapta la clave `DATA_KEY` al endpoint correspondiente.
+ ****************************************************************************************/
 
-import { CacheServiceCreate } from '../src';
+import { CacheServiceCreate } from '../../src';
 
+/* 1️⃣  Instancia LOCAL con TTL global = 60 s */
 const cache = CacheServiceCreate.create({
   cacheType        : 'local',
-  defaultTTL       : 60,                  // TTL “amplio” para datos de API
+  defaultTTL       : 60,
   serviceIdentifier: 'EXAMPLE_JSON_3',
   enableMonitoring : false
 });
 
-// 🔹 Clave que usaremos para el JSON
 const DATA_KEY = 'api:/products/list';
 
-async function main(): Promise<void> {
-  /* -----------------------------------------------------------
-   * 1. Simular que “traemos” un JSON de una API externa.
-   *    (En producción esto sería fetch/axios y luego cache.set)
-   * --------------------------------------------------------- */
+/* 2️⃣  IIFE async para evitar top‑level await */
+(async () => {
+
+  /* Guardar JSON (simulación de respuesta API v1) */
   const productsJson = {
-    version: 'v1',
-    generatedAt: new Date().toISOString(),
-    items: Array.from({ length: 1000 }, (_, i) => ({
-      id: i + 1,
-      name: `Product #${i + 1}`,
+    version     : 'v1',
+    generatedAt : new Date().toISOString(),
+    items       : Array.from({ length: 1000 }, (_, i) => ({
+      id   : i + 1,
+      name : `Product #${i + 1}`,
       price: (Math.random() * 100).toFixed(2)
     }))
   };
+  await cache.set(DATA_KEY, productsJson);              // TTL 60 s
 
-  // Guardar la respuesta JSON con TTL (aquí usamos el TTL global = 60 s)
-  await cache.set(DATA_KEY, productsJson);
+  /* Consumir datos desde caché */
+  const cached = await cache.get<typeof productsJson>(DATA_KEY);
+  // → cached?.items.length, cached?.version …
 
-  /* -----------------------------------------------------------
-   * 2. Consumir los datos desde caché
-   * --------------------------------------------------------- */
-  const cachedProducts = await cache.get<typeof productsJson>(DATA_KEY);
-  console.log('📦 Productos obtenidos desde caché:', {
-    version: cachedProducts?.version,
-    items: cachedProducts?.items.length
-  });
-
-  /* -----------------------------------------------------------
-   * 3. Evitar llamada a la API si los datos siguen vigentes
-   * --------------------------------------------------------- */
+  /* Evitar nueva llamada si la clave sigue viva */
   if (await cache.hasKey(DATA_KEY)) {
-    console.log('✅ Usamos caché – no llamamos a la API');
+    // Usar el JSON cacheado
   } else {
-    console.log('🚀 Cache MISS – sería momento de pedir a la API de nuevo');
+    // Llamar de nuevo a la API y luego cache.set()
   }
 
-  /* -----------------------------------------------------------
-   * 4. Invalidar manualmente cuando la API cambie de versión
-   * --------------------------------------------------------- */
-  console.log('\\n🔄 Supongamos que la API publica “v2”…');
-  await cache.del(DATA_KEY);                       // invalidamos caché v1
-  console.log('¿Existe la clave tras del()? →', await cache.hasKey(DATA_KEY)); // false
-
-  // Guardar la nueva versión
+  /* Invalidar manualmente al publicar la versión v2 */
+  await cache.del(DATA_KEY);                            // invalida v1
   const productsJsonV2 = { ...productsJson, version: 'v2' };
-  await cache.set(DATA_KEY, productsJsonV2);
-  console.log('🆕 Guardada versión v2; ahora existe:', await cache.hasKey(DATA_KEY));
+  await cache.set(DATA_KEY, productsJsonV2);            // guarda v2
 
-  /* -----------------------------------------------------------
-   * 5. Estadísticas para auditar tamaño y uso
-   * --------------------------------------------------------- */
-  console.log('\\n📊 Stats globales:', cache.getStats());
+  /* Auditoría de estadísticas */
+  const globalStats = cache.getStats();                 // hits, misses, size…
+  const perKeyStats = cache.getKeyStats()?.get(DATA_KEY);
 
-  const keyStats = cache.getKeyStats();
-  if (keyStats?.has(DATA_KEY)) {
-    console.log('📌 Stats de la clave JSON:', keyStats.get(DATA_KEY));
-  }
-}
-
-main().catch(console.error);
+})();
