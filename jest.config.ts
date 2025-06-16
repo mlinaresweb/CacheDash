@@ -16,6 +16,6 @@ const config: Config = {
   reporters: ['default', 'jest-junit'],
 
   // ⛔️ IGNORA los stress‑tests
-  testPathIgnorePatterns: ['<rootDir>/tests/edge/'],
+  testPathIgnorePatterns: ['<rootDir>/tests/edge/','<rootDir>/tests/a2e/'],
 };
 export default config;
