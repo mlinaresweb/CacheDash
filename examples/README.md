@@ -83,4 +83,3 @@ examples/
 ```
 
 ¡Feliz caching!
-```

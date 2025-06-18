@@ -4,7 +4,8 @@ import type { Config } from 'jest';
 const config: Config = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  setupFilesAfterEnv: ['./setupTests.ts'],
+  // setupFilesAfterEnv: ['./setupTests.ts'],
+  setupFilesAfterEnv: ['<rootDir>/tests/setupTests.ts'],
   coverageDirectory: 'coverage',
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',

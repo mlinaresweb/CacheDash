@@ -36,13 +36,13 @@ jest.mock('http', () => ({
 
 /* 6. Stub dashboardRoutes para que configureRoutes exista */
 jest.mock(
-  './src/dashboard/routes/dashboardRoutes',
+  '../src/dashboard/routes/dashboardRoutes',
   () => ({ configureRoutes: () => (req:any, res:any, next:any) => next() })
 );
 
 /* 7. Stub websocketServer + broadcast */
 jest.mock(
-  './src/dashboard/webSockets/websocketServer',
+  '../src/dashboard/webSockets/websocketServer',
   () => ({
     wss: { clients:new Set(), on:()=>{}, close:()=>{} },
     broadcast: async () => {},

@@ -131,7 +131,11 @@ export class LocalCacheService {
                     stats.responseTimes = [];
                     stats.uncachedResponseTimes = [];
                     stats.endTime = endTime;
-                }
+                }else {
+        // sólo refresh de TTL: actualizo ttl y endTime
+        stats.ttl     = ttl ?? stats.ttl;
+        stats.endTime = endTime;
+      }
                 stats.uncachedResponseTimes.push(responseTime);
                 break;
             case 'del':
@@ -362,6 +366,11 @@ public async set<T>(key: string, value: T, ttl?: number, isRefresh: boolean = fa
 
     logger.log(this.serviceIdentifier, `Setting key: ${key}, TTL: ${cacheTTL}`, 'set');
     this.localCache.set(key, compressedData, cacheTTL);
+ 
+    if (isRefresh) {
+    this.localCache.ttl(key, cacheTTL);
+    logger.log(this.serviceIdentifier, `TTL updated (refresh) for key: ${key}, new TTL: ${cacheTTL}`, 'set');
+  }
 
     // Actualizamos stats
     const responseTime = Date.now() - startTime;
